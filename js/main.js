@@ -173,19 +173,30 @@ function handleLogin(e) {
   btn.textContent = 'Logging in...';
   btn.disabled = true;
 
-  var db = firebase.firestore();
-  db.collection('phoneMap').doc(phone).get()
-    .then(function(doc) {
-      if (!doc.exists) {
-        throw { code: 'auth/user-not-found' };
-      }
-      var email = doc.data().email;
+  // If admin phone, use config email directly; otherwise look up Firestore
+  var emailPromise;
+  if (phone === ADMIN_CONFIG.phone) {
+    emailPromise = Promise.resolve(ADMIN_CONFIG.email);
+  } else {
+    var db = firebase.firestore();
+    emailPromise = db.collection('phoneMap').doc(phone).get()
+      .then(function(doc) {
+        if (!doc.exists) {
+          throw { code: 'auth/user-not-found' };
+        }
+        return doc.data().email;
+      });
+  }
+
+  emailPromise
+    .then(function(email) {
       return firebase.auth().signInWithEmailAndPassword(email, password);
     })
-    .then(function() {
-      showToast('Welcome back! Redirecting... ✨', 'success');
+    .then(function(credential) {
+      var isAdmin = credential.user.email === ADMIN_CONFIG.email;
+      showToast(isAdmin ? 'Welcome, Admin! Redirecting... 🛡️' : 'Welcome back! Redirecting... ✨', 'success');
       setTimeout(function() {
-        window.location.href = 'dashboard.html';
+        window.location.href = isAdmin ? 'admin.html' : 'dashboard.html';
       }, 1000);
     })
     .catch(function(error) {
@@ -258,49 +269,7 @@ function handleForgotPassword(e) {
   return false;
 }
 
-// ===== ADMIN LOGIN HANDLER =====
-function handleAdminLogin(e) {
-  e.preventDefault();
-
-  var phone = sanitizePhone(document.getElementById('adminPhone').value);
-  var password = document.getElementById('adminPassword').value.trim();
-
-  if (!phone || !password) {
-    showToast('Please enter phone number and password.', 'error');
-    return false;
-  }
-
-  if (phone !== ADMIN_CONFIG.phone) {
-    showToast('Not authorized. Admin access only.', 'error');
-    return false;
-  }
-
-  var btn = document.getElementById('adminLoginBtn');
-  btn.textContent = 'Logging in...';
-  btn.disabled = true;
-
-  firebase.auth().signInWithEmailAndPassword(ADMIN_CONFIG.email, password)
-    .then(function() {
-      document.getElementById('adminLoginPage').style.display = 'none';
-      document.getElementById('adminDashboard').style.display = 'flex';
-      loadMembersList();
-      loadMembersStats();
-      showToast('Welcome, Admin! 🛡️', 'success');
-    })
-    .catch(function(error) {
-      var message = 'Login failed.';
-      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        message = 'Incorrect password.';
-      } else if (error.code === 'auth/too-many-requests') {
-        message = 'Too many attempts. Try again later.';
-      }
-      showToast(message, 'error');
-      btn.textContent = 'Login as Admin 🛡️';
-      btn.disabled = false;
-    });
-
-  return false;
-}
+// (Admin login is handled via the unified login page)
 
 // ===== ADMIN: CREATE MEMBER =====
 function handleCreateMember(e) {
@@ -559,12 +528,7 @@ function showSection(sectionId, clickedLink) {
 // ===== LOGOUT HANDLER =====
 function handleLogout() {
   firebase.auth().signOut().then(function() {
-    // Redirect based on current page
-    if (window.location.pathname.includes('admin')) {
-      window.location.href = 'admin.html';
-    } else {
-      window.location.href = 'login.html';
-    }
+    window.location.href = 'login.html';
   });
 }
 
@@ -614,9 +578,10 @@ if (typeof firebase !== 'undefined' && window.location.pathname.includes('dashbo
 // ===== ADMIN AUTH CHECK =====
 if (typeof firebase !== 'undefined' && window.location.pathname.includes('admin')) {
   firebase.auth().onAuthStateChanged(function(user) {
-    if (user && user.email === ADMIN_CONFIG.email) {
-      // Admin is already logged in
-      document.getElementById('adminLoginPage').style.display = 'none';
+    if (!user || user.email !== ADMIN_CONFIG.email) {
+      // Not admin — redirect to login
+      window.location.href = 'login.html';
+    } else {
       document.getElementById('adminDashboard').style.display = 'flex';
       loadMembersList();
       loadMembersStats();
@@ -625,10 +590,10 @@ if (typeof firebase !== 'undefined' && window.location.pathname.includes('admin'
 }
 
 // ===== REDIRECT LOGGED-IN USERS FROM LOGIN PAGE =====
-if (typeof firebase !== 'undefined' && window.location.pathname.includes('login') && !window.location.pathname.includes('admin')) {
+if (typeof firebase !== 'undefined' && window.location.pathname.includes('login')) {
   firebase.auth().onAuthStateChanged(function(user) {
-    if (user && user.email !== ADMIN_CONFIG.email) {
-      window.location.href = 'dashboard.html';
+    if (user) {
+      window.location.href = user.email === ADMIN_CONFIG.email ? 'admin.html' : 'dashboard.html';
     }
   });
 }

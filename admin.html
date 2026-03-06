@@ -9,51 +9,6 @@
 </head>
 <body>
 
-  <!-- ========== ADMIN LOGIN ========== -->
-  <div class="login-page" id="adminLoginPage">
-    <div class="login-left" style="background: linear-gradient(135deg, #3D2836 0%, #6B2D5B 50%, #C94C6E 100%);">
-      <div class="decorative-icon">🛡️</div>
-      <h2>Admin Panel</h2>
-      <p>Manage your gym members, create accounts, and keep everything running smooth.</p>
-      <div class="login-features">
-        <div class="feature"><span>👥</span><span>Create member accounts</span></div>
-        <div class="feature"><span>📋</span><span>View all registered members</span></div>
-        <div class="feature"><span>📊</span><span>Manage memberships & plans</span></div>
-        <div class="feature"><span>🔐</span><span>Secure admin-only access</span></div>
-      </div>
-    </div>
-
-    <div class="login-right">
-      <div class="login-form-container">
-        <div class="logo">
-          <h1>She<span>Strength</span></h1>
-          <p style="color: var(--text-light); font-size: 0.85rem;">Admin Portal</p>
-        </div>
-
-        <h2>Admin Login</h2>
-        <p class="subtitle">Enter your admin credentials to manage the gym.</p>
-
-        <form class="login-form" id="adminLoginForm" onsubmit="return handleAdminLogin(event)">
-          <div class="form-group">
-            <label for="adminPhone">Phone Number</label>
-            <input type="tel" id="adminPhone" placeholder="Enter admin phone number" required>
-          </div>
-          <div class="form-group">
-            <label for="adminPassword">Password</label>
-            <input type="password" id="adminPassword" placeholder="Enter admin password" required>
-          </div>
-          <button type="submit" class="btn btn-primary btn-login" id="adminLoginBtn">
-            Login as Admin 🛡️
-          </button>
-        </form>
-
-        <div class="back-to-home" style="margin-top: 20px;">
-          <a href="index.html">← Back to Website</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- ========== ADMIN DASHBOARD ========== -->
   <div class="dashboard-layout" id="adminDashboard" style="display: none;">
     <!-- Sidebar -->
