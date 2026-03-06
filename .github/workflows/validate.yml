@@ -1,14 +1,16 @@
-name: Validate Dev Push
+name: CI - Validate & Preview
 
-# Runs on every push to dev branch
 on:
   push:
-    branches:
-      - dev
+    branches: [dev]
+  pull_request:
+    branches: [main]
 
 jobs:
   validate:
+    name: Validate Project
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,11 +46,3 @@ jobs:
 
       - name: Check for syntax errors in JS
         run: node --check js/main.js
-
-      - name: Preview Deploy to Vercel
-        run: |
-          npm install -g vercel
-          vercel --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
