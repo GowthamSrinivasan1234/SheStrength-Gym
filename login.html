@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Member Login — SheStrength</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
+</head>
+<body>
+
+  <div class="login-page">
+    <!-- Left Visual Panel -->
+    <div class="login-left">
+      <div class="decorative-icon">🌸</div>
+      <h2>Welcome Back,<br>Beautiful!</h2>
+      <p>Your fitness journey continues here. Log in to access your classes, track your progress, and stay connected with your sisters.</p>
+      
+      <div class="login-features">
+        <div class="feature">
+          <span>📅</span>
+          <span>View & book upcoming classes</span>
+        </div>
+        <div class="feature">
+          <span>📊</span>
+          <span>Track your fitness progress</span>
+        </div>
+        <div class="feature">
+          <span>💬</span>
+          <span>Connect with the community</span>
+        </div>
+        <div class="feature">
+          <span>🎉</span>
+          <span>Exclusive member events & offers</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Login Form -->
+    <div class="login-right">
+      <div class="login-form-container">
+        <div class="logo">
+          <h1>She<span>Strength</span></h1>
+          <p style="color: var(--text-light); font-size: 0.85rem;">Women's Fitness Community</p>
+        </div>
+
+        <h2>Member Login</h2>
+        <p class="subtitle">Enter the credentials provided by our gym to access your account.</p>
+
+        <form class="login-form" id="loginForm" onsubmit="return handleLogin(event)">
+          <div class="form-group">
+            <label for="memberId">Member ID</label>
+            <input type="text" id="memberId" placeholder="e.g., SS-2026-001" required>
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password" required>
+          </div>
+
+          <div class="form-options">
+            <label>
+              <input type="checkbox"> Remember me
+            </label>
+            <a href="#" onclick="alert('Please contact the gym reception at +91 98765 43210 to reset your password.'); return false;">Forgot password?</a>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-login">
+            Login to My Account ✨
+          </button>
+        </form>
+
+        <div class="login-note">
+          <strong>🔒 No signup needed!</strong><br>
+          Visit our gym in Salem, choose your membership plan, and we'll create your account. 
+          Your Member ID & password will be shared with you at the gym.
+        </div>
+
+        <div class="back-to-home">
+          <a href="index.html">← Back to Home</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

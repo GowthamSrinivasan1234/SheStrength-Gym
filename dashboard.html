@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Dashboard — SheStrength</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
+</head>
+<body>
+
+  <div class="dashboard-layout">
+    <!-- ========== SIDEBAR ========== -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <h2>She<span>Strength</span></h2>
+      </div>
+
+      <nav class="sidebar-menu">
+        <div class="menu-label">Main</div>
+        <a href="#dashboard" class="active" onclick="showSection('dashboard', this)">
+          <span class="menu-icon">🏠</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="#activities" onclick="showSection('activities', this)">
+          <span class="menu-icon">🎯</span>
+          <span>Activities</span>
+        </a>
+        <a href="#classes" onclick="showSection('classes', this)">
+          <span class="menu-icon">📅</span>
+          <span>Class Schedule</span>
+        </a>
+        <a href="#pricing" onclick="showSection('pricing', this)">
+          <span class="menu-icon">💰</span>
+          <span>Pricing & Plans</span>
+        </a>
+
+        <div class="sidebar-divider"></div>
+        <div class="menu-label">Community</div>
+        <a href="#events" onclick="showSection('events', this)">
+          <span class="menu-icon">🎉</span>
+          <span>Events</span>
+        </a>
+        <a href="#announcements" onclick="showSection('announcements', this)">
+          <span class="menu-icon">📢</span>
+          <span>Announcements</span>
+        </a>
+
+        <div class="sidebar-divider"></div>
+        <div class="menu-label">Account</div>
+        <a href="#profile" onclick="showSection('profile', this)">
+          <span class="menu-icon">👤</span>
+          <span>My Profile</span>
+        </a>
+        <a href="index.html">
+          <span class="menu-icon">🌐</span>
+          <span>Visit Website</span>
+        </a>
+        <a href="login.html" onclick="sessionStorage.clear()">
+          <span class="menu-icon">🚪</span>
+          <span>Logout</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- ========== MAIN CONTENT ========== -->
+    <main class="dashboard-main">
+      <!-- Top Bar -->
+      <div class="dashboard-topbar">
+        <h1 id="pageTitle">Dashboard</h1>
+        <div class="topbar-user">
+          <div class="user-info">
+            <strong>Aishwarya Devi</strong>
+            <small>Radiance Member</small>
+          </div>
+          <div class="avatar">👩</div>
+        </div>
+      </div>
+
+      <!-- ===== DASHBOARD SECTION ===== -->
+      <div id="section-dashboard" class="dashboard-section">
+        <!-- Welcome Banner -->
+        <div class="dashboard-welcome">
+          <h2>Good Morning, Aishwarya! ☀️</h2>
+          <p>You have 2 classes today. Keep going strong — you're on a 12-day streak! 🔥</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon pink">🔥</div>
+            <div class="stat-value">24</div>
+            <div class="stat-label">Classes This Month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon lavender">📊</div>
+            <div class="stat-value">12</div>
+            <div class="stat-label">Day Streak</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon mint">💪</div>
+            <div class="stat-value">3.5 kg</div>
+            <div class="stat-label">Progress This Month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon peach">⭐</div>
+            <div class="stat-value">Radiance</div>
+            <div class="stat-label">Your Plan</div>
+          </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+          <!-- Today's Classes -->
+          <div class="dash-card">
+            <h3>📅 Today's Classes</h3>
+            <div class="activity-list">
+              <div class="activity-item">
+                <div class="activity-icon">🧘</div>
+                <div class="activity-details">
+                  <strong>Morning Yoga Flow</strong>
+                  <span>with Priya Sharma · Yoga Studio</span>
+                </div>
+                <div class="activity-time">6:00 AM<br><small style="color: var(--text-light);">60 min</small></div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">🔥</div>
+                <div class="activity-details">
+                  <strong>HIIT Power Hour</strong>
+                  <span>with Deepika Rajan · Main Floor</span>
+                </div>
+                <div class="activity-time">7:30 AM<br><small style="color: var(--text-light);">45 min</small></div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">💃</div>
+                <div class="activity-details">
+                  <strong>Zumba Party</strong>
+                  <span>with Kavitha Nair · Dance Studio</span>
+                </div>
+                <div class="activity-time">5:00 PM<br><small style="color: var(--text-light);">45 min</small></div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">🏋️‍♀️</div>
+                <div class="activity-details">
+                  <strong>Strength & Tone</strong>
+                  <span>with Anitha Kumari · Weight Zone</span>
+                </div>
+                <div class="activity-time">6:30 PM<br><small style="color: var(--text-light);">60 min</small></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Announcements -->
+          <div class="dash-card">
+            <h3>📢 Announcements</h3>
+            <div class="announcement-list">
+              <div class="announcement-item highlight">
+                <h4>🎉 Women's Day Special Event!</h4>
+                <p>Join us for a grand celebration with free workshops, health talks, and fun activities.</p>
+                <div class="date">March 8, 2026</div>
+              </div>
+              <div class="announcement-item">
+                <h4>New Batch: Self-Defense Workshop</h4>
+                <p>6-week self-defense & kickboxing program starting soon. Limited spots!</p>
+                <div class="date">March 15, 2026</div>
+              </div>
+              <div class="announcement-item">
+                <h4>Weekend Wellness Retreat</h4>
+                <p>A day of yoga, meditation, healthy cooking demo & community bonding.</p>
+                <div class="date">March 22, 2026</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ACTIVITIES SECTION ===== -->
+      <div id="section-activities" class="dashboard-section" style="display: none;">
+        <div class="dash-card" style="margin-bottom: 24px;">
+          <h3>🎯 All Activities & Programs</h3>
+          <p style="color: var(--text-medium); margin-bottom: 20px;">All the activities and programs we conduct at SheStrength. Join any class based on your membership plan!</p>
+          
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon">🧘</div>
+              <div class="activity-details">
+                <strong>Yoga & Meditation</strong>
+                <span>Hatha, Vinyasa, Power Yoga, Pranayama · Daily Morning Sessions</span>
+              </div>
+              <div class="activity-price">Included</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🔥</div>
+              <div class="activity-details">
+                <strong>HIIT & Cardio Blast</strong>
+                <span>High-intensity fat burning workouts · Mon, Wed, Fri</span>
+              </div>
+              <div class="activity-price">Included</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🏋️‍♀️</div>
+              <div class="activity-details">
+                <strong>Strength Training</strong>
+                <span>Weight training, functional fitness, body sculpting · Daily</span>
+              </div>
+              <div class="activity-price">Included</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">💃</div>
+              <div class="activity-details">
+                <strong>Zumba & Dance Fitness</strong>
+                <span>Bollywood, Latin, Hip-hop dance workouts · Tue, Thu, Sat</span>
+              </div>
+              <div class="activity-price">Included</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🤸‍♀️</div>
+              <div class="activity-details">
+                <strong>Pilates & Core Work</strong>
+                <span>Mat Pilates, core strengthening, flexibility · Mon, Wed, Fri</span>
+              </div>
+              <div class="activity-price">Included</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🥊</div>
+              <div class="activity-details">
+                <strong>Self-Defense & Kickboxing</strong>
+                <span>Basic combat, awareness training · Tue, Thu</span>
+              </div>
+              <div class="activity-price">Included</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🏃‍♀️</div>
+              <div class="activity-details">
+                <strong>Open Gym & Cardio Machines</strong>
+                <span>Treadmill, elliptical, cycling, rowing — full access</span>
+              </div>
+              <div class="activity-price">Included</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🍎</div>
+              <div class="activity-details">
+                <strong>Nutrition & Diet Counseling</strong>
+                <span>Personalized diet plans, meal guidance, health tips</span>
+              </div>
+              <div class="activity-price">Radiance+</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">👩‍🏫</div>
+              <div class="activity-details">
+                <strong>1-on-1 Personal Training</strong>
+                <span>Dedicated personal trainer, custom workout plans</span>
+              </div>
+              <div class="activity-price">Empress</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">💆‍♀️</div>
+              <div class="activity-details">
+                <strong>Recovery & Spa</strong>
+                <span>Post-workout recovery, stretching, relaxation zone</span>
+              </div>
+              <div class="activity-price">Empress</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Special Programs -->
+        <div class="dash-card">
+          <h3>✨ Special Programs & Workshops</h3>
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon">🌸</div>
+              <div class="activity-details">
+                <strong>Women's Wellness Workshop</strong>
+                <span>Monthly workshops on hormonal health, PCOS fitness, menopause wellness</span>
+              </div>
+              <div class="activity-price">Free</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🧠</div>
+              <div class="activity-details">
+                <strong>Mental Health & Mindfulness</strong>
+                <span>Guided meditation, stress management, breathing techniques</span>
+              </div>
+              <div class="activity-price">Free</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">👶</div>
+              <div class="activity-details">
+                <strong>Prenatal & Postnatal Fitness</strong>
+                <span>Safe exercises for expecting and new moms</span>
+              </div>
+              <div class="activity-price">₹500/session</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🏆</div>
+              <div class="activity-details">
+                <strong>30-Day Fitness Challenge</strong>
+                <span>Monthly community challenge with prizes and celebrations</span>
+              </div>
+              <div class="activity-price">Free</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CLASSES SCHEDULE SECTION ===== -->
+      <div id="section-classes" class="dashboard-section" style="display: none;">
+        <div class="dash-card" style="margin-bottom: 24px;">
+          <h3>📅 Full Weekly Schedule</h3>
+          <p style="color: var(--text-medium); margin-bottom: 24px;">Complete class timetable with trainers and locations.</p>
+          
+          <!-- Monday -->
+          <h4 style="color: var(--rose-deep); margin: 20px 0 12px; font-family: 'Poppins', sans-serif; font-size: 0.95rem;">🌸 Monday</h4>
+          <div class="activity-list" style="margin-bottom: 20px;">
+            <div class="activity-item">
+              <div class="activity-icon">🧘</div>
+              <div class="activity-details">
+                <strong>Sunrise Yoga</strong>
+                <span>Priya Sharma · Yoga Studio</span>
+              </div>
+              <div class="activity-time">6:00 - 7:00 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🔥</div>
+              <div class="activity-details">
+                <strong>HIIT Blast</strong>
+                <span>Deepika Rajan · Main Floor</span>
+              </div>
+              <div class="activity-time">7:30 - 8:15 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🏋️‍♀️</div>
+              <div class="activity-details">
+                <strong>Strength & Tone</strong>
+                <span>Anitha Kumari · Weight Zone</span>
+              </div>
+              <div class="activity-time">10:00 - 11:00 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">💃</div>
+              <div class="activity-details">
+                <strong>Zumba Party</strong>
+                <span>Kavitha Nair · Dance Studio</span>
+              </div>
+              <div class="activity-time">5:00 - 5:45 PM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🤸‍♀️</div>
+              <div class="activity-details">
+                <strong>Pilates Core</strong>
+                <span>Priya Sharma · Yoga Studio</span>
+              </div>
+              <div class="activity-time">6:00 - 7:00 PM</div>
+            </div>
+          </div>
+
+          <!-- Tuesday -->
+          <h4 style="color: var(--rose-deep); margin: 20px 0 12px; font-family: 'Poppins', sans-serif; font-size: 0.95rem;">🌸 Tuesday</h4>
+          <div class="activity-list" style="margin-bottom: 20px;">
+            <div class="activity-item">
+              <div class="activity-icon">🧘</div>
+              <div class="activity-details">
+                <strong>Power Yoga</strong>
+                <span>Priya Sharma · Yoga Studio</span>
+              </div>
+              <div class="activity-time">6:00 - 7:00 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🏃‍♀️</div>
+              <div class="activity-details">
+                <strong>Cardio Circuit</strong>
+                <span>Deepika Rajan · Main Floor</span>
+              </div>
+              <div class="activity-time">8:00 - 8:45 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🥊</div>
+              <div class="activity-details">
+                <strong>Self-Defense</strong>
+                <span>Anitha Kumari · Multi-purpose Hall</span>
+              </div>
+              <div class="activity-time">10:30 - 11:15 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">💃</div>
+              <div class="activity-details">
+                <strong>Bollywood Dance Fitness</strong>
+                <span>Kavitha Nair · Dance Studio</span>
+              </div>
+              <div class="activity-time">5:30 - 6:15 PM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🏋️‍♀️</div>
+              <div class="activity-details">
+                <strong>Upper Body Strength</strong>
+                <span>Anitha Kumari · Weight Zone</span>
+              </div>
+              <div class="activity-time">6:30 - 7:30 PM</div>
+            </div>
+          </div>
+
+          <!-- Wednesday -->
+          <h4 style="color: var(--rose-deep); margin: 20px 0 12px; font-family: 'Poppins', sans-serif; font-size: 0.95rem;">🌸 Wednesday</h4>
+          <div class="activity-list" style="margin-bottom: 20px;">
+            <div class="activity-item">
+              <div class="activity-icon">🧘</div>
+              <div class="activity-details">
+                <strong>Morning Meditation & Yoga</strong>
+                <span>Priya Sharma · Yoga Studio</span>
+              </div>
+              <div class="activity-time">6:00 - 7:00 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🔥</div>
+              <div class="activity-details">
+                <strong>Tabata Training</strong>
+                <span>Deepika Rajan · Main Floor</span>
+              </div>
+              <div class="activity-time">7:30 - 8:10 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🤸‍♀️</div>
+              <div class="activity-details">
+                <strong>Pilates Flow</strong>
+                <span>Priya Sharma · Yoga Studio</span>
+              </div>
+              <div class="activity-time">10:00 - 10:45 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">💃</div>
+              <div class="activity-details">
+                <strong>Zumba Toning</strong>
+                <span>Kavitha Nair · Dance Studio</span>
+              </div>
+              <div class="activity-time">5:00 - 5:45 PM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🏋️‍♀️</div>
+              <div class="activity-details">
+                <strong>Lower Body Strength</strong>
+                <span>Anitha Kumari · Weight Zone</span>
+              </div>
+              <div class="activity-time">6:00 - 7:00 PM</div>
+            </div>
+          </div>
+
+          <!-- Thursday -->
+          <h4 style="color: var(--rose-deep); margin: 20px 0 12px; font-family: 'Poppins', sans-serif; font-size: 0.95rem;">🌸 Thursday</h4>
+          <div class="activity-list" style="margin-bottom: 20px;">
+            <div class="activity-item">
+              <div class="activity-icon">🧘</div>
+              <div class="activity-details">
+                <strong>Vinyasa Flow</strong>
+                <span>Priya Sharma · Yoga Studio</span>
+              </div>
+              <div class="activity-time">6:00 - 7:00 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🏃‍♀️</div>
+              <div class="activity-details">
+                <strong>Endurance Cardio</strong>
+                <span>Deepika Rajan · Main Floor</span>
+              </div>
+              <div class="activity-time">8:00 - 8:45 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🥊</div>
+              <div class="activity-details">
+                <strong>Kickboxing</strong>
+                <span>Anitha Kumari · Multi-purpose Hall</span>
+              </div>
+              <div class="activity-time">10:30 - 11:15 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">💃</div>
+              <div class="activity-details">
+                <strong>Latin Dance Fitness</strong>
+                <span>Kavitha Nair · Dance Studio</span>
+              </div>
+              <div class="activity-time">5:30 - 6:15 PM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🏋️‍♀️</div>
+              <div class="activity-details">
+                <strong>Full Body Strength</strong>
+                <span>Anitha Kumari · Weight Zone</span>
+              </div>
+              <div class="activity-time">6:30 - 7:30 PM</div>
+            </div>
+          </div>
+
+          <!-- Friday -->
+          <h4 style="color: var(--rose-deep); margin: 20px 0 12px; font-family: 'Poppins', sans-serif; font-size: 0.95rem;">🌸 Friday</h4>
+          <div class="activity-list" style="margin-bottom: 20px;">
+            <div class="activity-item">
+              <div class="activity-icon">🧘</div>
+              <div class="activity-details">
+                <strong>Gentle Yoga & Stretching</strong>
+                <span>Priya Sharma · Yoga Studio</span>
+              </div>
+              <div class="activity-time">6:00 - 7:00 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🔥</div>
+              <div class="activity-details">
+                <strong>HIIT Express</strong>
+                <span>Deepika Rajan · Main Floor</span>
+              </div>
+              <div class="activity-time">7:30 - 8:00 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🤸‍♀️</div>
+              <div class="activity-details">
+                <strong>Core & Abs Focus</strong>
+                <span>Priya Sharma · Yoga Studio</span>
+              </div>
+              <div class="activity-time">10:00 - 10:45 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">💃</div>
+              <div class="activity-details">
+                <strong>FriYay Dance Party</strong>
+                <span>Kavitha Nair · Dance Studio</span>
+              </div>
+              <div class="activity-time">5:00 - 6:00 PM</div>
+            </div>
+          </div>
+
+          <!-- Saturday -->
+          <h4 style="color: var(--rose-deep); margin: 20px 0 12px; font-family: 'Poppins', sans-serif; font-size: 0.95rem;">🌸 Saturday</h4>
+          <div class="activity-list" style="margin-bottom: 20px;">
+            <div class="activity-item">
+              <div class="activity-icon">🧘</div>
+              <div class="activity-details">
+                <strong>Weekend Sunrise Yoga</strong>
+                <span>Priya Sharma · Yoga Studio</span>
+              </div>
+              <div class="activity-time">6:30 - 7:30 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🔥</div>
+              <div class="activity-details">
+                <strong>Weekend Warrior HIIT</strong>
+                <span>Deepika Rajan · Main Floor</span>
+              </div>
+              <div class="activity-time">8:00 - 8:45 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">💃</div>
+              <div class="activity-details">
+                <strong>Dance Fitness Mash-up</strong>
+                <span>Kavitha Nair · Dance Studio</span>
+              </div>
+              <div class="activity-time">10:00 - 11:00 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🏋️‍♀️</div>
+              <div class="activity-details">
+                <strong>Open Gym</strong>
+                <span>Self-guided workout · All Areas</span>
+              </div>
+              <div class="activity-time">All Day</div>
+            </div>
+          </div>
+
+          <!-- Sunday -->
+          <h4 style="color: var(--text-light); margin: 20px 0 12px; font-family: 'Poppins', sans-serif; font-size: 0.95rem;">😴 Sunday (Limited Hours)</h4>
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon">🧘</div>
+              <div class="activity-details">
+                <strong>Relaxation Yoga & Meditation</strong>
+                <span>Priya Sharma · Yoga Studio</span>
+              </div>
+              <div class="activity-time">7:00 - 8:00 AM</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🏋️‍♀️</div>
+              <div class="activity-details">
+                <strong>Open Gym</strong>
+                <span>Self-guided · All Areas</span>
+              </div>
+              <div class="activity-time">8:00 AM - 12:00 PM</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PRICING SECTION ===== -->
+      <div id="section-pricing" class="dashboard-section" style="display: none;">
+        <div class="dash-card" style="margin-bottom: 24px;">
+          <h3>💰 Membership Plans & Pricing</h3>
+          <p style="color: var(--text-medium); margin-bottom: 24px;">Detailed pricing for all our membership plans and add-on services.</p>
+          
+          <table class="pricing-table">
+            <thead>
+              <tr>
+                <th>Plan</th>
+                <th>Monthly</th>
+                <th>Quarterly</th>
+                <th>Annual</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>🌱 Blossom</strong></td>
+                <td class="price-tag">₹1,499</td>
+                <td class="price-tag">₹3,999</td>
+                <td class="price-tag">₹14,999</td>
+                <td><span class="status-available">Available</span></td>
+              </tr>
+              <tr>
+                <td><strong>✨ Radiance</strong></td>
+                <td class="price-tag">₹2,499</td>
+                <td class="price-tag">₹6,499</td>
+                <td class="price-tag">₹24,999</td>
+                <td><span class="status-active">Your Plan</span></td>
+              </tr>
+              <tr>
+                <td><strong>👑 Empress</strong></td>
+                <td class="price-tag">₹3,999</td>
+                <td class="price-tag">₹10,499</td>
+                <td class="price-tag">₹39,999</td>
+                <td><span class="status-available">Available</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Add-on Services -->
+        <div class="dash-card" style="margin-bottom: 24px;">
+          <h3>➕ Add-On Services</h3>
+          <table class="pricing-table">
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th>Price</th>
+                <th>Duration</th>
+                <th>Availability</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>👩‍🏫 Personal Training (Extra)</strong></td>
+                <td class="price-tag">₹800/session</td>
+                <td>60 min</td>
+                <td><span class="status-available">Book at Desk</span></td>
+              </tr>
+              <tr>
+                <td><strong>🍎 Diet Consultation</strong></td>
+                <td class="price-tag">₹500/session</td>
+                <td>30 min</td>
+                <td><span class="status-available">Book at Desk</span></td>
+              </tr>
+              <tr>
+                <td><strong>👶 Prenatal Fitness</strong></td>
+                <td class="price-tag">₹600/session</td>
+                <td>45 min</td>
+                <td><span class="status-available">Book at Desk</span></td>
+              </tr>
+              <tr>
+                <td><strong>💆‍♀️ Post-Workout Recovery</strong></td>
+                <td class="price-tag">₹300/session</td>
+                <td>30 min</td>
+                <td><span class="status-available">Walk-in</span></td>
+              </tr>
+              <tr>
+                <td><strong>🧴 Locker Rental (Monthly)</strong></td>
+                <td class="price-tag">₹200/month</td>
+                <td>Monthly</td>
+                <td><span class="status-available">Available</span></td>
+              </tr>
+              <tr>
+                <td><strong>👥 Guest Pass</strong></td>
+                <td class="price-tag">₹300/visit</td>
+                <td>1 Day</td>
+                <td><span class="status-available">At Desk</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Plan Benefits Comparison -->
+        <div class="dash-card">
+          <h3>📋 Plan Benefits Comparison</h3>
+          <table class="pricing-table">
+            <thead>
+              <tr>
+                <th>Feature</th>
+                <th>🌱 Blossom</th>
+                <th>✨ Radiance</th>
+                <th>👑 Empress</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Gym Floor Access</td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>✅</td>
+              </tr>
+              <tr>
+                <td>Group Classes</td>
+                <td>2/week</td>
+                <td>Unlimited</td>
+                <td>Unlimited</td>
+              </tr>
+              <tr>
+                <td>Locker Room</td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>✅</td>
+              </tr>
+              <tr>
+                <td>Diet Plan</td>
+                <td>❌</td>
+                <td>✅</td>
+                <td>✅</td>
+              </tr>
+              <tr>
+                <td>Progress Tracking</td>
+                <td>❌</td>
+                <td>✅</td>
+                <td>✅</td>
+              </tr>
+              <tr>
+                <td>Personal Training</td>
+                <td>❌</td>
+                <td>❌</td>
+                <td>✅ (4/month)</td>
+              </tr>
+              <tr>
+                <td>Nutrition Consult</td>
+                <td>❌</td>
+                <td>❌</td>
+                <td>✅</td>
+              </tr>
+              <tr>
+                <td>Recovery & Spa</td>
+                <td>❌</td>
+                <td>❌</td>
+                <td>✅</td>
+              </tr>
+              <tr>
+                <td>Guest Passes</td>
+                <td>❌</td>
+                <td>❌</td>
+                <td>2/month</td>
+              </tr>
+              <tr>
+                <td>Community Events</td>
+                <td>✅</td>
+                <td>✅</td>
+                <td>✅ VIP</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ===== EVENTS SECTION ===== -->
+      <div id="section-events" class="dashboard-section" style="display: none;">
+        <div class="dash-card" style="margin-bottom: 24px;">
+          <h3>🎉 Upcoming Events</h3>
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon">💜</div>
+              <div class="activity-details">
+                <strong>International Women's Day Celebration</strong>
+                <span>Grand event with workshops, talks by inspiring women, and group activities</span>
+              </div>
+              <div class="activity-time">Mar 8<br><small>All Day</small></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🥊</div>
+              <div class="activity-details">
+                <strong>Self-Defense Workshop (6-Week Program)</strong>
+                <span>Learn essential self-defense techniques. Open to all members.</span>
+              </div>
+              <div class="activity-time">Mar 15<br><small>10 AM</small></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🧘</div>
+              <div class="activity-details">
+                <strong>Weekend Wellness Retreat</strong>
+                <span>Full day of yoga, meditation, healthy cooking demo & sister bonding</span>
+              </div>
+              <div class="activity-time">Mar 22<br><small>7 AM</small></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🏆</div>
+              <div class="activity-details">
+                <strong>March Fitness Challenge - Awards Ceremony</strong>
+                <span>Celebrating winners of this month's 30-day fitness challenge</span>
+              </div>
+              <div class="activity-time">Mar 30<br><small>6 PM</small></div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">🎂</div>
+              <div class="activity-details">
+                <strong>Monthly Birthday Celebration</strong>
+                <span>We celebrate all March babies! Cake, fun & fitness games</span>
+              </div>
+              <div class="activity-time">Mar 28<br><small>5 PM</small></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dash-card">
+          <h3>📸 Past Events</h3>
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-icon">🎊</div>
+              <div class="activity-details">
+                <strong>SheStrength Grand Opening</strong>
+                <span>Our amazing launch event with 200+ women from Salem</span>
+              </div>
+              <div class="activity-time">Jan 2026</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-icon">❤️</div>
+              <div class="activity-details">
+                <strong>Valentine's Self-Love Workshop</strong>
+                <span>Learning to love ourselves through fitness and mindfulness</span>
+              </div>
+              <div class="activity-time">Feb 14</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== ANNOUNCEMENTS SECTION ===== -->
+      <div id="section-announcements" class="dashboard-section" style="display: none;">
+        <div class="dash-card">
+          <h3>📢 All Announcements</h3>
+          <div class="announcement-list">
+            <div class="announcement-item highlight">
+              <h4>🎉 Women's Day Special — March 8!</h4>
+              <p>Join us for a grand celebration! Free entry for non-members who want to try out our gym. Special workshops, health screenings, and a community lunch. Bring your sisters, friends, and family!</p>
+              <div class="date">Posted: March 1, 2026</div>
+            </div>
+            <div class="announcement-item highlight">
+              <h4>🥊 New Self-Defense Batch Starting!</h4>
+              <p>Our popular 6-week Self-Defense & Kickboxing program is back! Only 20 spots available. Talk to our reception to reserve your spot. Included in Radiance & Empress plans.</p>
+              <div class="date">Posted: February 28, 2026</div>
+            </div>
+            <div class="announcement-item">
+              <h4>🕐 Revised Weekend Hours</h4>
+              <p>Starting March, Sunday hours are extended to 7:00 AM - 1:00 PM (previously closed at 12 PM). Enjoy an extra hour of weekend fitness!</p>
+              <div class="date">Posted: February 25, 2026</div>
+            </div>
+            <div class="announcement-item">
+              <h4>🧘 New Trainer Alert!</h4>
+              <p>We're excited to welcome Roshini Menon, a certified prenatal & postnatal fitness specialist, to our team! She'll be starting prenatal yoga sessions from March 10.</p>
+              <div class="date">Posted: February 22, 2026</div>
+            </div>
+            <div class="announcement-item">
+              <h4>💧 Stay Hydrated!</h4>
+              <p>We've installed new fruit-infused water stations in the gym! Try our refreshing lemon-mint and cucumber-rose water. Free for all members.</p>
+              <div class="date">Posted: February 18, 2026</div>
+            </div>
+            <div class="announcement-item">
+              <h4>📊 Monthly Progress Reports</h4>
+              <p>Radiance & Empress members — your February progress reports are ready! Check with your trainer for detailed body composition analysis and fitness improvements.</p>
+              <div class="date">Posted: February 15, 2026</div>
+            </div>
+            <div class="announcement-item">
+              <h4>🎂 February Birthday Celebration Photos</h4>
+              <p>What a wonderful celebration! Photos from our February birthday party are up on our Instagram. Tag your sisters and share the love!</p>
+              <div class="date">Posted: February 12, 2026</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PROFILE SECTION ===== -->
+      <div id="section-profile" class="dashboard-section" style="display: none;">
+        <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
+          <div class="dash-card">
+            <h3>👤 My Profile</h3>
+            <div style="text-align: center; margin-bottom: 24px;">
+              <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--blush), var(--rose)); display: flex; align-items: center; justify-content: center; font-size: 3rem; margin: 0 auto 16px;">👩</div>
+              <h4 style="font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--plum);">Aishwarya Devi</h4>
+              <p style="color: var(--rose); font-weight: 500;">Radiance Member</p>
+            </div>
+            <div class="activity-list">
+              <div class="activity-item">
+                <div class="activity-details">
+                  <strong>Member ID</strong>
+                  <span>SS-2026-042</span>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-details">
+                  <strong>Email</strong>
+                  <span>aishwarya.d@email.com</span>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-details">
+                  <strong>Phone</strong>
+                  <span>+91 98765 12345</span>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-details">
+                  <strong>Member Since</strong>
+                  <span>January 15, 2026</span>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-details">
+                  <strong>Plan Expiry</strong>
+                  <span>April 14, 2026</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-card">
+            <h3>📊 My Fitness Journey</h3>
+            <div class="activity-list">
+              <div class="activity-item">
+                <div class="activity-icon">📅</div>
+                <div class="activity-details">
+                  <strong>Total Classes Attended</strong>
+                  <span>48 classes</span>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">🔥</div>
+                <div class="activity-details">
+                  <strong>Current Streak</strong>
+                  <span>12 days</span>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">⭐</div>
+                <div class="activity-details">
+                  <strong>Favorite Class</strong>
+                  <span>Zumba Party</span>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">🏆</div>
+                <div class="activity-details">
+                  <strong>Achievements</strong>
+                  <span>30-Day Challenge Winner (Feb)</span>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-icon">💪</div>
+                <div class="activity-details">
+                  <strong>Fitness Goal</strong>
+                  <span>Tone & strengthen, improve flexibility</span>
+                </div>
+              </div>
+            </div>
+
+            <div style="margin-top: 24px; padding: 20px; background: var(--blush-light); border-radius: var(--radius-sm); text-align: center;">
+              <p style="font-size: 0.85rem; color: var(--text-medium);">
+                Need to update your profile? Contact our front desk or call <strong style="color: var(--rose-deep);">+91 98765 43210</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
