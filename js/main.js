@@ -658,6 +658,10 @@ function escapeHtml(text) {
 
 // ===== ADMIN: LOAD ADMIN PROFILE =====
 function loadAdminProfile(user) {
+  // For primary admin, always set name immediately (don't wait for Firestore)
+  if (user.email === ADMIN_CONFIG.email) {
+    setAdminDisplayName('Gowtham');
+  }
   var db = firebase.firestore();
   db.collection('users').doc(user.uid).get().then(function(doc) {
     if (!doc.exists) {
@@ -674,11 +678,13 @@ function loadAdminProfile(user) {
       setAdminDisplayName(adminName);
     } else {
       var data = doc.data();
-      var displayName = data.name || user.displayName || user.email.split('@')[0];
-      // Fix name for primary admin if it was set generically
-      if (user.email === ADMIN_CONFIG.email && (!data.name || data.name.toLowerCase() === 'admin' || data.name === user.email.split('@')[0])) {
+      var displayName = data.name || 'Gowtham';
+      // Always fix name for primary admin
+      if (user.email === ADMIN_CONFIG.email) {
         displayName = 'Gowtham';
-        db.collection('users').doc(user.uid).update({ name: 'Gowtham' });
+        if (data.name !== 'Gowtham') {
+          db.collection('users').doc(user.uid).update({ name: 'Gowtham' });
+        }
       }
       setAdminDisplayName(displayName);
       // Load admin photo
@@ -688,6 +694,11 @@ function loadAdminProfile(user) {
         if (img) { img.src = data.photoURL; img.style.display = 'block'; }
         if (emoji) emoji.style.display = 'none';
       }
+    }
+  }).catch(function() {
+    // If Firestore fails, still show name for primary admin
+    if (user.email === ADMIN_CONFIG.email) {
+      setAdminDisplayName('Gowtham');
     }
   });
 }
