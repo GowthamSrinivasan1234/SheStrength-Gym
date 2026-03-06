@@ -2,6 +2,21 @@
    SheStrength - Main JavaScript
    ============================================ */
 
+// ===== FIREBASE INIT =====
+var firebaseConfig = {
+  apiKey: "AIzaSyARh58ffWN1VEwE1eATGchrCh-ArfpZIeM",
+  authDomain: "mygym-d2be6.firebaseapp.com",
+  projectId: "mygym-d2be6",
+  storageBucket: "mygym-d2be6.firebasestorage.app",
+  messagingSenderId: "252919057112",
+  appId: "1:252919057112:web:61598662ab88d7fae6e5ad",
+  measurementId: "G-D30DY7NE8Q"
+};
+
+if (typeof firebase !== 'undefined') {
+  firebase.initializeApp(firebaseConfig);
+}
+
 // ===== NAVBAR SCROLL EFFECT =====
 window.addEventListener('scroll', function() {
   const navbar = document.getElementById('navbar');
@@ -87,13 +102,50 @@ function handleContactForm(e) {
 function handleLogin(e) {
   e.preventDefault();
 
-  // No authorization required — direct access for demo
-  sessionStorage.setItem('isLoggedIn', 'true');
-  sessionStorage.setItem('memberName', 'Aishwarya Devi');
-  sessionStorage.setItem('memberId', 'SS-2026-042');
+  var email = document.getElementById('memberEmail').value.trim();
+  var password = document.getElementById('password').value.trim();
 
-  window.location.href = 'dashboard.html';
+  if (!email || !password) {
+    showToast('Please enter your email and password.', 'error');
+    return false;
+  }
+
+  // Disable button while loading
+  var btn = document.querySelector('.btn-login');
+  btn.textContent = 'Logging in...';
+  btn.disabled = true;
+
+  firebase.auth().signInWithEmailAndPassword(email, password)
+    .then(function(userCredential) {
+      showToast('Welcome back! Redirecting... ✨', 'success');
+      setTimeout(function() {
+        window.location.href = 'dashboard.html';
+      }, 1000);
+    })
+    .catch(function(error) {
+      var message = 'Login failed. Please check your credentials.';
+      if (error.code === 'auth/user-not-found') {
+        message = 'No account found. Please contact the gym.';
+      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        message = 'Incorrect password. Please try again.';
+      } else if (error.code === 'auth/invalid-email') {
+        message = 'Invalid email format.';
+      } else if (error.code === 'auth/too-many-requests') {
+        message = 'Too many attempts. Please try again later.';
+      }
+      showToast(message, 'error');
+      btn.textContent = 'Login to My Account ✨';
+      btn.disabled = false;
+    });
+
   return false;
+}
+
+// ===== LOGOUT HANDLER =====
+function handleLogout() {
+  firebase.auth().signOut().then(function() {
+    window.location.href = 'login.html';
+  });
 }
 
 // ===== DASHBOARD SECTION SWITCHING =====
@@ -179,34 +231,31 @@ function showToast(message, type) {
 }
 
 // ===== DASHBOARD AUTH CHECK =====
-// If on dashboard page and not logged in, redirect to login
-if (window.location.pathname.includes('dashboard')) {
-  if (!sessionStorage.getItem('isLoggedIn')) {
-    // For demo purposes, allow viewing without login
-    // In production, uncomment the redirect below:
-    // window.location.href = 'login.html';
-  }
+if (typeof firebase !== 'undefined' && window.location.pathname.includes('dashboard')) {
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (!user) {
+      window.location.href = 'login.html';
+    } else {
+      // Update dashboard with user info
+      var displayName = user.displayName || user.email.split('@')[0];
+      var welcomeHeading = document.querySelector('.dashboard-welcome h2');
+      var topbarName = document.querySelector('.topbar-user .user-info strong');
+      var profileName = document.querySelector('#section-profile h4');
+
+      var hour = new Date().getHours();
+      var greeting = hour < 12 ? 'Good Morning' : (hour < 17 ? 'Good Afternoon' : 'Good Evening');
+
+      if (welcomeHeading) welcomeHeading.textContent = greeting + ', ' + displayName + '! ☀️';
+      if (topbarName) topbarName.textContent = displayName;
+    }
+  });
 }
 
-// ===== GREETING BASED ON TIME =====
-function updateGreeting() {
-  var welcomeHeading = document.querySelector('.dashboard-welcome h2');
-  if (!welcomeHeading) return;
-
-  var hour = new Date().getHours();
-  var greeting;
-
-  if (hour < 12) {
-    greeting = 'Good Morning';
-  } else if (hour < 17) {
-    greeting = 'Good Afternoon';
-  } else {
-    greeting = 'Good Evening';
-  }
-
-  var name = sessionStorage.getItem('memberName') || 'Aishwarya';
-  welcomeHeading.textContent = greeting + ', ' + name.split(' ')[0] + '! ☀️';
+// Redirect away from login page if already logged in
+if (typeof firebase !== 'undefined' && (window.location.pathname.includes('login') || window.location.pathname.endsWith('login.html'))) {
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+      window.location.href = 'dashboard.html';
+    }
+  });
 }
-
-// Run greeting update on load
-window.addEventListener('load', updateGreeting);
