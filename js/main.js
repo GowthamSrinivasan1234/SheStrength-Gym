@@ -425,13 +425,14 @@ function loadMembersStats() {
   var db = firebase.firestore();
   db.collection('users').where('role', '==', 'member').get()
     .then(function(snapshot) {
-      var total = 0, radiance = 0, empress = 0;
+      var total = 0, radiance = 0, empress = 0, pt = 0;
 
       snapshot.forEach(function(doc) {
         total++;
         var plan = doc.data().plan;
         if (plan === 'Radiance') radiance++;
         if (plan === 'Empress') empress++;
+        if (plan === 'Personal Training') pt++;
       });
 
       var el;
@@ -441,6 +442,8 @@ function loadMembersStats() {
       if (el) el.textContent = radiance;
       el = document.getElementById('empressMembersCount');
       if (el) el.textContent = empress;
+      el = document.getElementById('ptMembersCount');
+      if (el) el.textContent = pt;
     });
 }
 
@@ -477,13 +480,17 @@ function showAdminSection(sectionId, clickedLink) {
     var titles = {
       'overview': 'Overview',
       'addmember': 'Add New Member',
-      'members': 'All Members'
+      'members': 'All Members',
+      'pt': 'Personal Training'
     };
     pageTitle.textContent = titles[sectionId] || 'Overview';
   }
 
   if (sectionId === 'members') {
     loadMembersList();
+  }
+  if (sectionId === 'pt') {
+    loadPTMembers();
   }
 }
 
@@ -516,6 +523,7 @@ function showSection(sectionId, clickedLink) {
       'pricing': 'Pricing & Plans',
       'events': 'Events',
       'announcements': 'Announcements',
+      'mytraining': 'My Training',
       'profile': 'My Profile'
     };
     pageTitle.textContent = titles[sectionId] || 'Dashboard';
@@ -530,6 +538,235 @@ function handleLogout() {
   firebase.auth().signOut().then(function() {
     window.location.href = 'login.html';
   });
+}
+
+// ===== ADMIN: OPEN MEMBER EDIT =====
+function openMemberEdit(uid) {
+  var db = firebase.firestore();
+  db.collection('users').doc(uid).get().then(function(doc) {
+    if (!doc.exists) {
+      showToast('Member not found.', 'error');
+      return;
+    }
+    var m = doc.data();
+    document.getElementById('editMemberUid').value = uid;
+    document.getElementById('editName').value = m.name || '';
+    document.getElementById('editEmail').value = m.email || '';
+    document.getElementById('editPhone').value = m.phone || '';
+    document.getElementById('editPlan').value = m.plan || 'Blossom';
+    document.getElementById('editAge').value = m.age || '';
+    document.getElementById('editWeight').value = m.weight || '';
+    document.getElementById('editHeight').value = m.height || '';
+    document.getElementById('editGoal').value = m.goal || '';
+    document.getElementById('editNotes').value = m.notes || '';
+    document.getElementById('memberEditModal').style.display = 'block';
+  });
+}
+
+function closeMemberEdit() {
+  document.getElementById('memberEditModal').style.display = 'none';
+}
+
+// ===== ADMIN: SAVE MEMBER EDIT =====
+function handleEditMember(e) {
+  e.preventDefault();
+
+  var uid = document.getElementById('editMemberUid').value;
+  var btn = document.getElementById('editMemberBtn');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+
+  var db = firebase.firestore();
+  db.collection('users').doc(uid).update({
+    name: document.getElementById('editName').value.trim(),
+    plan: document.getElementById('editPlan').value,
+    age: document.getElementById('editAge').value,
+    weight: document.getElementById('editWeight').value,
+    height: document.getElementById('editHeight').value,
+    goal: document.getElementById('editGoal').value.trim(),
+    notes: document.getElementById('editNotes').value.trim()
+  }).then(function() {
+    showToast('Member updated! ✅', 'success');
+    btn.textContent = 'Save Changes ✅';
+    btn.disabled = false;
+    closeMemberEdit();
+    loadMembersList();
+    loadMembersStats();
+  }).catch(function() {
+    showToast('Failed to update member.', 'error');
+    btn.textContent = 'Save Changes ✅';
+    btn.disabled = false;
+  });
+
+  return false;
+}
+
+// ===== ADMIN: LOAD PT MEMBERS DROPDOWN =====
+function loadPTMembers() {
+  var select = document.getElementById('ptMemberSelect');
+  if (!select) return;
+
+  var db = firebase.firestore();
+  db.collection('users').where('plan', '==', 'Personal Training').get()
+    .then(function(snapshot) {
+      select.innerHTML = '<option value="">Choose a member...</option>';
+      snapshot.forEach(function(doc) {
+        var m = doc.data();
+        var option = document.createElement('option');
+        option.value = doc.id;
+        option.textContent = m.name + ' (' + m.phone + ')';
+        select.appendChild(option);
+      });
+    });
+}
+
+// ===== ADMIN: LOAD PT PROGRESS =====
+function loadPTProgress(uid) {
+  if (!uid) {
+    document.getElementById('ptAddEntryCard').style.display = 'none';
+    document.getElementById('ptHistoryCard').style.display = 'none';
+    return;
+  }
+
+  document.getElementById('ptAddEntryCard').style.display = 'block';
+  document.getElementById('ptHistoryCard').style.display = 'block';
+
+  // Set today's date as default
+  var today = new Date().toISOString().split('T')[0];
+  document.getElementById('ptDate').value = today;
+
+  var container = document.getElementById('ptHistoryContainer');
+  container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">Loading...</p>';
+
+  var db = firebase.firestore();
+  db.collection('progress').doc(uid).collection('logs').orderBy('date', 'desc').limit(20).get()
+    .then(function(snapshot) {
+      if (snapshot.empty) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 20px;">No progress entries yet. Add the first one!</p>';
+        return;
+      }
+
+      var html = '';
+      snapshot.forEach(function(doc) {
+        var p = doc.data();
+        var date = p.date || '—';
+        html += '<div style="border: 1px solid var(--blush-light); border-radius: 12px; padding: 16px; margin-bottom: 12px;">';
+        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">';
+        html += '<strong style="color: var(--plum);">📅 ' + escapeHtml(date) + '</strong>';
+        if (p.weight) html += '<span style="background: var(--blush-light); padding: 4px 12px; border-radius: 20px; font-size: 0.82rem;">⚖️ ' + escapeHtml(String(p.weight)) + ' kg</span>';
+        html += '</div>';
+        html += '<p style="font-size: 0.88rem; color: var(--text-dark); margin-bottom: 6px;"><strong>Workout:</strong> ' + escapeHtml(p.exercises) + '</p>';
+        if (p.bodyFat) html += '<p style="font-size: 0.84rem; color: var(--text-medium);">Body Fat: ' + escapeHtml(String(p.bodyFat)) + '%</p>';
+        if (p.measurements) html += '<p style="font-size: 0.84rem; color: var(--text-medium);">Measurements: ' + escapeHtml(p.measurements) + '</p>';
+        if (p.trainerNotes) html += '<p style="font-size: 0.84rem; color: var(--rose); margin-top: 6px;">🗒️ ' + escapeHtml(p.trainerNotes) + '</p>';
+        html += '</div>';
+      });
+
+      container.innerHTML = html;
+    });
+}
+
+// ===== ADMIN: ADD PROGRESS ENTRY =====
+function handleAddProgress(e) {
+  e.preventDefault();
+
+  var uid = document.getElementById('ptMemberSelect').value;
+  if (!uid) {
+    showToast('Please select a member first.', 'error');
+    return false;
+  }
+
+  var btn = document.getElementById('addProgressBtn');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+
+  var db = firebase.firestore();
+  db.collection('progress').doc(uid).collection('logs').add({
+    date: document.getElementById('ptDate').value,
+    weight: document.getElementById('ptWeight').value || '',
+    exercises: document.getElementById('ptExercises').value.trim(),
+    bodyFat: document.getElementById('ptBodyFat').value || '',
+    measurements: document.getElementById('ptMeasurements').value.trim(),
+    trainerNotes: document.getElementById('ptTrainerNotes').value.trim(),
+    addedAt: new Date().toISOString()
+  }).then(function() {
+    showToast('Progress entry added! 📊', 'success');
+    document.getElementById('ptProgressForm').reset();
+    document.getElementById('ptDate').value = new Date().toISOString().split('T')[0];
+    btn.textContent = 'Add Progress Entry 📊';
+    btn.disabled = false;
+    loadPTProgress(uid);
+  }).catch(function() {
+    showToast('Failed to add entry.', 'error');
+    btn.textContent = 'Add Progress Entry 📊';
+    btn.disabled = false;
+  });
+
+  return false;
+}
+
+// ===== MEMBER: SAVE PROFILE =====
+function handleSaveProfile(e) {
+  e.preventDefault();
+
+  var user = firebase.auth().currentUser;
+  if (!user) return false;
+
+  var btn = document.getElementById('saveProfileBtn');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+
+  var db = firebase.firestore();
+  db.collection('users').doc(user.uid).update({
+    age: document.getElementById('profileAge').value,
+    weight: document.getElementById('profileWeight').value,
+    height: document.getElementById('profileHeight').value,
+    goal: document.getElementById('profileGoal').value.trim(),
+    notes: document.getElementById('profileNotes').value.trim()
+  }).then(function() {
+    showToast('Profile updated! ✅', 'success');
+    btn.textContent = 'Save My Details ✅';
+    btn.disabled = false;
+  }).catch(function() {
+    showToast('Failed to save. Please try again.', 'error');
+    btn.textContent = 'Save My Details ✅';
+    btn.disabled = false;
+  });
+
+  return false;
+}
+
+// ===== MEMBER: LOAD MY PT PROGRESS =====
+function loadMyPTProgress(uid) {
+  var container = document.getElementById('myPTProgressContainer');
+  if (!container) return;
+
+  var db = firebase.firestore();
+  db.collection('progress').doc(uid).collection('logs').orderBy('date', 'desc').limit(20).get()
+    .then(function(snapshot) {
+      if (snapshot.empty) {
+        container.innerHTML = '<div class="dash-card" style="margin-top: 20px;"><p style="text-align: center; color: var(--text-light); padding: 40px;">No training progress logged yet. Your trainer will update this for you! 💪</p></div>';
+        return;
+      }
+
+      var html = '';
+      snapshot.forEach(function(doc) {
+        var p = doc.data();
+        html += '<div class="dash-card" style="margin-top: 16px;">';
+        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">';
+        html += '<h4 style="color: var(--plum);">📅 ' + escapeHtml(p.date || '—') + '</h4>';
+        if (p.weight) html += '<span style="background: var(--blush-light); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 500;">⚖️ ' + escapeHtml(String(p.weight)) + ' kg</span>';
+        html += '</div>';
+        html += '<div class="activity-list">';
+        html += '<div class="activity-item"><div class="activity-icon">🏋️</div><div class="activity-details"><strong>Workout</strong><span>' + escapeHtml(p.exercises) + '</span></div></div>';
+        if (p.bodyFat) html += '<div class="activity-item"><div class="activity-icon">📊</div><div class="activity-details"><strong>Body Fat</strong><span>' + escapeHtml(String(p.bodyFat)) + '%</span></div></div>';
+        if (p.measurements) html += '<div class="activity-item"><div class="activity-icon">📏</div><div class="activity-details"><strong>Measurements</strong><span>' + escapeHtml(p.measurements) + '</span></div></div>';
+        if (p.trainerNotes) html += '<div class="activity-item"><div class="activity-icon">🗒️</div><div class="activity-details"><strong>Trainer Notes</strong><span>' + escapeHtml(p.trainerNotes) + '</span></div></div>';
+        html += '</div></div>';
+      });
+
+      container.innerHTML = html;
+    });
 }
 
 // ===== DASHBOARD AUTH CHECK (Member Dashboard) =====
@@ -550,16 +787,47 @@ if (typeof firebase !== 'undefined' && window.location.pathname.includes('dashbo
             displayName = data.name || displayName;
             plan = data.plan || '';
 
-            // Update profile section if it exists
-            var profileName = document.querySelector('#section-profile .user-full-name');
-            var profileEmail = document.querySelector('#section-profile .user-email');
-            var profilePhone = document.querySelector('#section-profile .user-phone');
-            var profilePlan = document.querySelector('#section-profile .user-plan');
+            // Populate profile display
+            var el;
+            el = document.getElementById('profileDisplayName');
+            if (el) el.textContent = data.name || displayName;
+            el = document.getElementById('profileDisplayPlan');
+            if (el) el.textContent = plan + ' Member';
+            el = document.getElementById('profileEmail');
+            if (el) el.textContent = data.email || '';
+            el = document.getElementById('profilePhone');
+            if (el) el.textContent = data.phone || '';
+            el = document.getElementById('profilePlan');
+            if (el) el.textContent = plan;
+            el = document.getElementById('profileJoined');
+            if (el && data.joinedDate) el.textContent = new Date(data.joinedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 
-            if (profileName) profileName.textContent = data.name || '';
-            if (profileEmail) profileEmail.textContent = data.email || '';
-            if (profilePhone) profilePhone.textContent = data.phone || '';
-            if (profilePlan) profilePlan.textContent = data.plan || '';
+            // Populate editable form fields
+            el = document.getElementById('profileAge');
+            if (el) el.value = data.age || '';
+            el = document.getElementById('profileWeight');
+            if (el) el.value = data.weight || '';
+            el = document.getElementById('profileHeight');
+            if (el) el.value = data.height || '';
+            el = document.getElementById('profileGoal');
+            if (el) el.value = data.goal || '';
+            el = document.getElementById('profileNotes');
+            if (el) el.value = data.notes || '';
+
+            // Show PT nav link if plan is Personal Training
+            var ptNav = document.getElementById('ptNavLink');
+            if (ptNav) {
+              ptNav.style.display = plan === 'Personal Training' ? 'flex' : 'none';
+            }
+
+            // Load PT progress if applicable
+            if (plan === 'Personal Training') {
+              loadMyPTProgress(user.uid);
+            }
+
+            // Update topbar small text
+            var topbarSmall = document.querySelector('.topbar-user .user-info small');
+            if (topbarSmall) topbarSmall.textContent = plan + ' Member';
           }
 
           var welcomeHeading = document.querySelector('.dashboard-welcome h2');

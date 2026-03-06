@@ -47,7 +47,11 @@
         </a>
 
         <div class="sidebar-divider"></div>
-        <div class="menu-label">Account</div>
+        <div class="menu-label">Personal</div>
+        <a href="#mytraining" onclick="showSection('mytraining', this)" id="ptNavLink" style="display: none;">
+          <span class="menu-icon">🏋️</span>
+          <span>My Training</span>
+        </a>
         <a href="#profile" onclick="showSection('profile', this)">
           <span class="menu-icon">👤</span>
           <span>My Profile</span>
@@ -875,6 +879,20 @@
         </div>
       </div>
 
+      <!-- ===== PERSONAL TRAINING SECTION ===== -->
+      <div id="section-mytraining" class="dashboard-section" style="display: none;">
+        <div class="dashboard-welcome" style="background: linear-gradient(135deg, #3D2836, #6B2D5B, #C94C6E);">
+          <h2>My Training Progress 🏋️</h2>
+          <p>Your trainer logs your workout progress here. Keep crushing it!</p>
+        </div>
+
+        <div id="myPTProgressContainer">
+          <div class="dash-card" style="margin-top: 20px;">
+            <p style="text-align: center; color: var(--text-light); padding: 40px;">Loading your training progress...</p>
+          </div>
+        </div>
+      </div>
+
       <!-- ===== PROFILE SECTION ===== -->
       <div id="section-profile" class="dashboard-section" style="display: none;">
         <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr;">
@@ -882,88 +900,68 @@
             <h3>👤 My Profile</h3>
             <div style="text-align: center; margin-bottom: 24px;">
               <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--blush), var(--rose)); display: flex; align-items: center; justify-content: center; font-size: 3rem; margin: 0 auto 16px;">👩</div>
-              <h4 style="font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--plum);">Aishwarya Devi</h4>
-              <p style="color: var(--rose); font-weight: 500;">Radiance Member</p>
+              <h4 id="profileDisplayName" style="font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--plum);">Member</h4>
+              <p id="profileDisplayPlan" style="color: var(--rose); font-weight: 500;">Member</p>
             </div>
             <div class="activity-list">
               <div class="activity-item">
                 <div class="activity-details">
-                  <strong>Member ID</strong>
-                  <span>SS-2026-042</span>
-                </div>
-              </div>
-              <div class="activity-item">
-                <div class="activity-details">
                   <strong>Email</strong>
-                  <span>aishwarya.d@email.com</span>
+                  <span id="profileEmail">—</span>
                 </div>
               </div>
               <div class="activity-item">
                 <div class="activity-details">
                   <strong>Phone</strong>
-                  <span>+91 98765 12345</span>
+                  <span id="profilePhone">—</span>
+                </div>
+              </div>
+              <div class="activity-item">
+                <div class="activity-details">
+                  <strong>Plan</strong>
+                  <span id="profilePlan">—</span>
                 </div>
               </div>
               <div class="activity-item">
                 <div class="activity-details">
                   <strong>Member Since</strong>
-                  <span>January 15, 2026</span>
-                </div>
-              </div>
-              <div class="activity-item">
-                <div class="activity-details">
-                  <strong>Plan Expiry</strong>
-                  <span>April 14, 2026</span>
+                  <span id="profileJoined">—</span>
                 </div>
               </div>
             </div>
           </div>
 
           <div class="dash-card">
-            <h3>📊 My Fitness Journey</h3>
-            <div class="activity-list">
-              <div class="activity-item">
-                <div class="activity-icon">📅</div>
-                <div class="activity-details">
-                  <strong>Total Classes Attended</strong>
-                  <span>48 classes</span>
-                </div>
-              </div>
-              <div class="activity-item">
-                <div class="activity-icon">🔥</div>
-                <div class="activity-details">
-                  <strong>Current Streak</strong>
-                  <span>12 days</span>
-                </div>
-              </div>
-              <div class="activity-item">
-                <div class="activity-icon">⭐</div>
-                <div class="activity-details">
-                  <strong>Favorite Class</strong>
-                  <span>Zumba Party</span>
-                </div>
-              </div>
-              <div class="activity-item">
-                <div class="activity-icon">🏆</div>
-                <div class="activity-details">
-                  <strong>Achievements</strong>
-                  <span>30-Day Challenge Winner (Feb)</span>
-                </div>
-              </div>
-              <div class="activity-item">
-                <div class="activity-icon">💪</div>
-                <div class="activity-details">
-                  <strong>Fitness Goal</strong>
-                  <span>Tone & strengthen, improve flexibility</span>
-                </div>
-              </div>
-            </div>
+            <h3>✏️ Update My Details</h3>
+            <p style="color: var(--text-medium); margin-bottom: 20px; font-size: 0.85rem;">Fill in or update your personal details below.</p>
 
-            <div style="margin-top: 24px; padding: 20px; background: var(--blush-light); border-radius: var(--radius-sm); text-align: center;">
-              <p style="font-size: 0.85rem; color: var(--text-medium);">
-                Need to update your profile? Contact our front desk or call <strong style="color: var(--rose-deep);">+91 98765 43210</strong>
-              </p>
-            </div>
+            <form id="profileForm" onsubmit="return handleSaveProfile(event)">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="profileAge">Age</label>
+                  <input type="number" id="profileAge" placeholder="e.g., 25" min="10" max="100">
+                </div>
+                <div class="form-group">
+                  <label for="profileWeight">Weight (kg)</label>
+                  <input type="number" id="profileWeight" placeholder="e.g., 55" step="0.1">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="profileHeight">Height (cm)</label>
+                  <input type="number" id="profileHeight" placeholder="e.g., 165" step="0.1">
+                </div>
+                <div class="form-group">
+                  <label for="profileGoal">Fitness Goal</label>
+                  <input type="text" id="profileGoal" placeholder="e.g., Weight loss, toning">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="profileNotes">Health Notes</label>
+                <textarea id="profileNotes" placeholder="Any health conditions, allergies, preferences..." style="min-height: 70px;"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary" id="saveProfileBtn" style="width: 100%; justify-content: center;">Save My Details ✅</button>
+            </form>
           </div>
         </div>
       </div>
