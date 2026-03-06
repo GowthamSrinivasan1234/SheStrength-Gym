@@ -32,6 +32,9 @@
         <a href="#" onclick="showAdminSection('pt', this)">
           <span class="menu-icon">🏋️</span><span>PT Progress</span>
         </a>
+        <a href="#" onclick="showAdminSection('addadmin', this)">
+          <span class="menu-icon">🛡️</span><span>Add Admin</span>
+        </a>
 
         <div class="sidebar-divider"></div>
         <div class="menu-label">Links</div>
@@ -144,6 +147,32 @@
         </div>
       </div>
 
+      <!-- ADD ADMIN SECTION -->
+      <div id="admin-section-addadmin" class="dashboard-section" style="display: none;">
+        <div class="dash-card">
+          <h3>🛡️ Add New Admin</h3>
+          <p style="color: var(--text-medium); margin-bottom: 24px;">Create another admin account. They will receive a password setup email.</p>
+
+          <form id="createAdminForm" onsubmit="return handleCreateAdmin(event)">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="adminName">Full Name *</label>
+                <input type="text" id="adminName" placeholder="e.g., Trainer Meera" required>
+              </div>
+              <div class="form-group">
+                <label for="adminEmail">Email Address *</label>
+                <input type="email" id="adminEmail" placeholder="e.g., meera@email.com" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="adminPhone">Phone Number *</label>
+              <input type="tel" id="adminPhone" placeholder="e.g., 9876543210" required>
+            </div>
+            <button type="submit" class="btn btn-primary" id="createAdminBtn" style="width: 100%; justify-content: center;">Create Admin Account 🛡️</button>
+          </form>
+        </div>
+      </div>
+
       <!-- MEMBERS LIST SECTION -->
       <div id="admin-section-members" class="dashboard-section" style="display: none;">
         <div class="dash-card">
@@ -215,6 +244,30 @@
               </div>
               <button type="submit" class="btn btn-primary" id="editMemberBtn" style="width: 100%; justify-content: center;">Save Changes ✅</button>
             </form>
+          </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="memberDeleteModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1001; align-items: center; justify-content: center;">
+          <div style="background: white; border-radius: 20px; padding: 32px; max-width: 450px; width: 90%; margin: auto; position: relative; top: 50%; transform: translateY(-50%); text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 8px;">⚠️</div>
+            <h3 style="color: #e74c3c; margin-bottom: 8px;">Delete Member</h3>
+            <p style="color: var(--text-medium); margin-bottom: 20px; font-size: 0.88rem;">This action will deactivate the member. Please confirm by entering their details:</p>
+            <input type="hidden" id="deleteUid">
+            <input type="hidden" id="deleteExpectedMemberId">
+            <input type="hidden" id="deleteExpectedName">
+            <div class="form-group" style="text-align: left;">
+              <label>Enter Member ID</label>
+              <input type="text" id="deleteConfirmMemberId" placeholder="e.g., 42KXMB" style="text-transform: uppercase;">
+            </div>
+            <div class="form-group" style="text-align: left;">
+              <label>Enter Member Name</label>
+              <input type="text" id="deleteConfirmName" placeholder="e.g., Priya Sharma">
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 16px;">
+              <button onclick="closeDeleteModal()" class="btn btn-outline" style="flex: 1; justify-content: center;">Cancel</button>
+              <button onclick="confirmDeleteMember()" class="btn" style="flex: 1; justify-content: center; background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 12px; cursor: pointer; font-weight: 600;">Delete Member</button>
+            </div>
           </div>
         </div>
       </div>
