@@ -674,7 +674,13 @@ function loadAdminProfile(user) {
       setAdminDisplayName(adminName);
     } else {
       var data = doc.data();
-      setAdminDisplayName(data.name || user.displayName || user.email.split('@')[0]);
+      var displayName = data.name || user.displayName || user.email.split('@')[0];
+      // Fix name for primary admin if it was set generically
+      if (user.email === ADMIN_CONFIG.email && (!data.name || data.name.toLowerCase() === 'admin' || data.name === user.email.split('@')[0])) {
+        displayName = 'Gowtham';
+        db.collection('users').doc(user.uid).update({ name: 'Gowtham' });
+      }
+      setAdminDisplayName(displayName);
       // Load admin photo
       if (data.photoURL) {
         var img = document.getElementById('adminAvatarImg');
