@@ -45,12 +45,12 @@
         </div>
 
         <h2>Member Login</h2>
-        <p class="subtitle">Enter the credentials provided by our gym to access your account.</p>
+        <p class="subtitle">Enter your phone number and password to access your account.</p>
 
         <form class="login-form" id="loginForm" onsubmit="return handleLogin(event)">
           <div class="form-group">
-            <label for="memberEmail">Member Email</label>
-            <input type="email" id="memberEmail" placeholder="e.g., priya@shestrength.com" required>
+            <label for="loginPhone">Phone Number</label>
+            <input type="tel" id="loginPhone" placeholder="e.g., 9876543210" required>
           </div>
 
           <div class="form-group">
@@ -62,18 +62,34 @@
             <label>
               <input type="checkbox"> Remember me
             </label>
-            <a href="#" onclick="alert('Please contact the gym reception at +91 98765 43210 to reset your password.'); return false;">Forgot password?</a>
+            <a href="#" onclick="toggleForgotPassword(); return false;">Forgot password?</a>
           </div>
 
-          <button type="submit" class="btn btn-primary btn-login">
+          <button type="submit" class="btn btn-primary btn-login" id="loginBtn">
             Login to My Account ✨
           </button>
         </form>
+
+        <!-- Forgot Password Section -->
+        <div id="forgotPasswordSection" style="display: none; margin-top: 20px;">
+          <div style="padding: 24px; background: var(--cream-warm); border-radius: var(--radius-sm);">
+            <h3 style="font-size: 1.1rem; color: var(--plum); margin-bottom: 8px;">Reset Password</h3>
+            <p style="font-size: 0.82rem; color: var(--text-medium); margin-bottom: 16px;">Enter your registered phone number and we'll send a password reset link to your email.</p>
+            <form onsubmit="return handleForgotPassword(event)">
+              <div class="form-group">
+                <input type="tel" id="forgotPhone" placeholder="Your phone number" required>
+              </div>
+              <button type="submit" class="btn btn-soft" id="resetBtn" style="width: 100%; justify-content: center;">Send Reset Link 📧</button>
+            </form>
+            <a href="#" onclick="toggleForgotPassword(); return false;" style="display: block; text-align: center; margin-top: 12px; font-size: 0.82rem; color: var(--text-light);">← Back to login</a>
+          </div>
+        </div>
 
         <div class="login-note">
           <strong>🔒 No signup needed!</strong><br>
           Visit our gym in Salem, choose your membership plan, and we'll create your account. 
           Your login email & password will be shared with you at the gym.
+          You'll receive a password setup email — no need to remember anything we give you!
         </div>
 
         <div class="back-to-home">
@@ -85,6 +101,7 @@
 
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

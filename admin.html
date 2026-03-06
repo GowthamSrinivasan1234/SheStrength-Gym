@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — SheStrength</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
+</head>
+<body>
+
+  <!-- ========== ADMIN LOGIN ========== -->
+  <div class="login-page" id="adminLoginPage">
+    <div class="login-left" style="background: linear-gradient(135deg, #3D2836 0%, #6B2D5B 50%, #C94C6E 100%);">
+      <div class="decorative-icon">🛡️</div>
+      <h2>Admin Panel</h2>
+      <p>Manage your gym members, create accounts, and keep everything running smooth.</p>
+      <div class="login-features">
+        <div class="feature"><span>👥</span><span>Create member accounts</span></div>
+        <div class="feature"><span>📋</span><span>View all registered members</span></div>
+        <div class="feature"><span>📊</span><span>Manage memberships & plans</span></div>
+        <div class="feature"><span>🔐</span><span>Secure admin-only access</span></div>
+      </div>
+    </div>
+
+    <div class="login-right">
+      <div class="login-form-container">
+        <div class="logo">
+          <h1>She<span>Strength</span></h1>
+          <p style="color: var(--text-light); font-size: 0.85rem;">Admin Portal</p>
+        </div>
+
+        <h2>Admin Login</h2>
+        <p class="subtitle">Enter your admin credentials to manage the gym.</p>
+
+        <form class="login-form" id="adminLoginForm" onsubmit="return handleAdminLogin(event)">
+          <div class="form-group">
+            <label for="adminPhone">Phone Number</label>
+            <input type="tel" id="adminPhone" placeholder="Enter admin phone number" required>
+          </div>
+          <div class="form-group">
+            <label for="adminPassword">Password</label>
+            <input type="password" id="adminPassword" placeholder="Enter admin password" required>
+          </div>
+          <button type="submit" class="btn btn-primary btn-login" id="adminLoginBtn">
+            Login as Admin 🛡️
+          </button>
+        </form>
+
+        <div class="back-to-home" style="margin-top: 20px;">
+          <a href="index.html">← Back to Website</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== ADMIN DASHBOARD ========== -->
+  <div class="dashboard-layout" id="adminDashboard" style="display: none;">
+    <!-- Sidebar -->
+    <aside class="sidebar" style="background: #2D1F28;">
+      <div class="sidebar-logo">
+        <h2>She<span>Strength</span></h2>
+        <p style="font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 4px;">Admin Panel</p>
+      </div>
+
+      <nav class="sidebar-menu">
+        <div class="menu-label">Management</div>
+        <a href="#" class="active" onclick="showAdminSection('overview', this)">
+          <span class="menu-icon">📊</span><span>Overview</span>
+        </a>
+        <a href="#" onclick="showAdminSection('addmember', this)">
+          <span class="menu-icon">➕</span><span>Add Member</span>
+        </a>
+        <a href="#" onclick="showAdminSection('members', this)">
+          <span class="menu-icon">👥</span><span>All Members</span>
+        </a>
+
+        <div class="sidebar-divider"></div>
+        <div class="menu-label">Links</div>
+        <a href="index.html">
+          <span class="menu-icon">🌐</span><span>Website</span>
+        </a>
+        <a href="#" onclick="handleLogout()">
+          <span class="menu-icon">🚪</span><span>Logout</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <div class="dashboard-topbar">
+        <h1 id="adminPageTitle">Overview</h1>
+        <div class="topbar-user">
+          <div class="user-info">
+            <strong>Admin</strong>
+            <small>SheStrength</small>
+          </div>
+          <div class="avatar" style="background: linear-gradient(135deg, #3D2836, #6B2D5B);">🛡️</div>
+        </div>
+      </div>
+
+      <!-- OVERVIEW SECTION -->
+      <div id="admin-section-overview" class="dashboard-section">
+        <div class="dashboard-welcome" style="background: linear-gradient(135deg, #3D2836, #6B2D5B, #C94C6E);">
+          <h2>Welcome, Admin! 🛡️</h2>
+          <p>Manage your gym members and keep the community growing.</p>
+        </div>
+
+        <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="stat-card">
+            <div class="stat-icon pink">👥</div>
+            <div class="stat-value" id="totalMembersCount">0</div>
+            <div class="stat-label">Total Members</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon lavender">✨</div>
+            <div class="stat-value" id="radianceMembersCount">0</div>
+            <div class="stat-label">Radiance Members</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon mint">👑</div>
+            <div class="stat-value" id="empressMembersCount">0</div>
+            <div class="stat-label">Empress Members</div>
+          </div>
+        </div>
+
+        <div class="dash-card" style="margin-top: 24px;">
+          <h3>⚡ Quick Actions</h3>
+          <div style="display: flex; gap: 16px; margin-top: 16px; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="showAdminSection('addmember', document.querySelector('.sidebar-menu a:nth-child(3)'))">
+              ➕ Add New Member
+            </button>
+            <button class="btn btn-outline" onclick="showAdminSection('members', document.querySelector('.sidebar-menu a:nth-child(4)'))">
+              👥 View All Members
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADD MEMBER SECTION -->
+      <div id="admin-section-addmember" class="dashboard-section" style="display: none;">
+        <div class="dash-card">
+          <h3>➕ Register New Member</h3>
+          <p style="color: var(--text-medium); margin-bottom: 24px;">
+            Fill in the member details below. A password reset email will be sent so the member can set their own password.
+          </p>
+
+          <form id="createMemberForm" onsubmit="return handleCreateMember(event)">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="memberName">Full Name *</label>
+                <input type="text" id="memberName" placeholder="e.g., Priya Sharma" required>
+              </div>
+              <div class="form-group">
+                <label for="memberEmail">Email Address *</label>
+                <input type="email" id="memberEmail" placeholder="e.g., priya@email.com" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="memberPhone">Phone Number *</label>
+                <input type="tel" id="memberPhone" placeholder="e.g., 9876543210" required>
+              </div>
+              <div class="form-group">
+                <label for="memberAge">Age</label>
+                <input type="number" id="memberAge" placeholder="e.g., 25" min="10" max="100">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="memberWeight">Weight (kg)</label>
+                <input type="number" id="memberWeight" placeholder="e.g., 55" step="0.1">
+              </div>
+              <div class="form-group">
+                <label for="memberHeight">Height (cm)</label>
+                <input type="number" id="memberHeight" placeholder="e.g., 165" step="0.1">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="memberPlan">Membership Plan *</label>
+                <select id="memberPlan" required>
+                  <option value="">Select plan...</option>
+                  <option value="Blossom">🌱 Blossom — ₹1,499/month</option>
+                  <option value="Radiance">✨ Radiance — ₹2,499/month</option>
+                  <option value="Empress">👑 Empress — ₹3,999/month</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="memberGoal">Fitness Goal</label>
+                <input type="text" id="memberGoal" placeholder="e.g., Weight loss, muscle tone">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="memberNotes">Notes (optional)</label>
+              <textarea id="memberNotes" placeholder="Any health conditions, preferences, etc." style="min-height: 80px;"></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="createMemberBtn" style="width: 100%; justify-content: center;">
+              Create Member Account & Send Password Email 📧
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- MEMBERS LIST SECTION -->
+      <div id="admin-section-members" class="dashboard-section" style="display: none;">
+        <div class="dash-card">
+          <h3>👥 All Registered Members</h3>
+          <p style="color: var(--text-medium); margin-bottom: 20px;">All members registered at SheStrength.</p>
+
+          <div id="membersListContainer">
+            <p style="text-align: center; color: var(--text-light); padding: 40px;">Loading members...</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

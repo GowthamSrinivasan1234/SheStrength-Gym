@@ -17,9 +17,15 @@ if (typeof firebase !== 'undefined') {
   firebase.initializeApp(firebaseConfig);
 }
 
+// ===== ADMIN CONFIG =====
+var ADMIN_CONFIG = {
+  phone: '9952418551',
+  email: 'gowthamsrinivasan1234@gmail.com'
+};
+
 // ===== NAVBAR SCROLL EFFECT =====
 window.addEventListener('scroll', function() {
-  const navbar = document.getElementById('navbar');
+  var navbar = document.getElementById('navbar');
   if (navbar) {
     if (window.scrollY > 50) {
       navbar.classList.add('scrolled');
@@ -30,15 +36,14 @@ window.addEventListener('scroll', function() {
 });
 
 // ===== MOBILE HAMBURGER MENU =====
-const hamburger = document.getElementById('hamburger');
-const navLinks = document.getElementById('navLinks');
+var hamburger = document.getElementById('hamburger');
+var navLinks = document.getElementById('navLinks');
 
 if (hamburger && navLinks) {
   hamburger.addEventListener('click', function() {
     navLinks.classList.toggle('open');
   });
 
-  // Close menu when a link is clicked
   navLinks.querySelectorAll('a').forEach(function(link) {
     link.addEventListener('click', function() {
       navLinks.classList.remove('open');
@@ -92,110 +97,13 @@ function handleContactForm(e) {
     return false;
   }
 
-  // Simulate form submission
   showToast('Thank you, ' + name + '! We\'ll get back to you soon. 💌', 'success');
   e.target.reset();
   return false;
 }
 
-// ===== LOGIN HANDLER =====
-function handleLogin(e) {
-  e.preventDefault();
-
-  var email = document.getElementById('memberEmail').value.trim();
-  var password = document.getElementById('password').value.trim();
-
-  if (!email || !password) {
-    showToast('Please enter your email and password.', 'error');
-    return false;
-  }
-
-  // Disable button while loading
-  var btn = document.querySelector('.btn-login');
-  btn.textContent = 'Logging in...';
-  btn.disabled = true;
-
-  firebase.auth().signInWithEmailAndPassword(email, password)
-    .then(function(userCredential) {
-      showToast('Welcome back! Redirecting... ✨', 'success');
-      setTimeout(function() {
-        window.location.href = 'dashboard.html';
-      }, 1000);
-    })
-    .catch(function(error) {
-      var message = 'Login failed. Please check your credentials.';
-      if (error.code === 'auth/user-not-found') {
-        message = 'No account found. Please contact the gym.';
-      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        message = 'Incorrect password. Please try again.';
-      } else if (error.code === 'auth/invalid-email') {
-        message = 'Invalid email format.';
-      } else if (error.code === 'auth/too-many-requests') {
-        message = 'Too many attempts. Please try again later.';
-      }
-      showToast(message, 'error');
-      btn.textContent = 'Login to My Account ✨';
-      btn.disabled = false;
-    });
-
-  return false;
-}
-
-// ===== LOGOUT HANDLER =====
-function handleLogout() {
-  firebase.auth().signOut().then(function() {
-    window.location.href = 'login.html';
-  });
-}
-
-// ===== DASHBOARD SECTION SWITCHING =====
-function showSection(sectionId, clickedLink) {
-  // Hide all sections
-  var sections = document.querySelectorAll('.dashboard-section');
-  sections.forEach(function(section) {
-    section.style.display = 'none';
-  });
-
-  // Show target section
-  var target = document.getElementById('section-' + sectionId);
-  if (target) {
-    target.style.display = 'block';
-  }
-
-  // Update active link
-  if (clickedLink) {
-    var menuLinks = document.querySelectorAll('.sidebar-menu a');
-    menuLinks.forEach(function(link) {
-      link.classList.remove('active');
-    });
-    clickedLink.classList.add('active');
-  }
-
-  // Update page title
-  var pageTitle = document.getElementById('pageTitle');
-  if (pageTitle) {
-    var titles = {
-      'dashboard': 'Dashboard',
-      'activities': 'Activities & Programs',
-      'classes': 'Class Schedule',
-      'pricing': 'Pricing & Plans',
-      'events': 'Events',
-      'announcements': 'Announcements',
-      'profile': 'My Profile'
-    };
-    pageTitle.textContent = titles[sectionId] || 'Dashboard';
-  }
-
-  // Scroll to top of main area
-  var main = document.querySelector('.dashboard-main');
-  if (main) {
-    main.scrollTop = 0;
-  }
-}
-
 // ===== TOAST NOTIFICATION =====
 function showToast(message, type) {
-  // Remove existing toast if any
   var existing = document.querySelector('.toast-notification');
   if (existing) existing.remove();
 
@@ -213,7 +121,6 @@ function showToast(message, type) {
   toast.textContent = message;
   document.body.appendChild(toast);
 
-  // Add the animation keyframes if not already present
   if (!document.getElementById('toast-styles')) {
     var style = document.createElement('style');
     style.id = 'toast-styles';
@@ -223,38 +130,504 @@ function showToast(message, type) {
     document.head.appendChild(style);
   }
 
-  // Auto-remove after 4 seconds
   setTimeout(function() {
     toast.style.animation = 'slideOutRight 0.4s ease forwards';
     setTimeout(function() { toast.remove(); }, 400);
   }, 4000);
 }
 
-// ===== DASHBOARD AUTH CHECK =====
+// ===== UTILITY: Generate Temp Password =====
+function generateTempPassword() {
+  var chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$';
+  var password = '';
+  var array = new Uint8Array(16);
+  crypto.getRandomValues(array);
+  for (var i = 0; i < 16; i++) {
+    password += chars[array[i] % chars.length];
+  }
+  return password;
+}
+
+// ===== UTILITY: Sanitize Phone =====
+function sanitizePhone(phone) {
+  return phone.replace(/\D/g, '').replace(/^91/, '').slice(-10);
+}
+
+// ===== MEMBER LOGIN HANDLER (Phone-based) =====
+function handleLogin(e) {
+  e.preventDefault();
+
+  var phone = sanitizePhone(document.getElementById('loginPhone').value);
+  var password = document.getElementById('password').value.trim();
+
+  if (!phone || phone.length !== 10) {
+    showToast('Please enter a valid 10-digit phone number.', 'error');
+    return false;
+  }
+  if (!password) {
+    showToast('Please enter your password.', 'error');
+    return false;
+  }
+
+  var btn = document.getElementById('loginBtn');
+  btn.textContent = 'Logging in...';
+  btn.disabled = true;
+
+  var db = firebase.firestore();
+  db.collection('phoneMap').doc(phone).get()
+    .then(function(doc) {
+      if (!doc.exists) {
+        throw { code: 'auth/user-not-found' };
+      }
+      var email = doc.data().email;
+      return firebase.auth().signInWithEmailAndPassword(email, password);
+    })
+    .then(function() {
+      showToast('Welcome back! Redirecting... ✨', 'success');
+      setTimeout(function() {
+        window.location.href = 'dashboard.html';
+      }, 1000);
+    })
+    .catch(function(error) {
+      var message = 'Login failed. Please check your credentials.';
+      if (error.code === 'auth/user-not-found') {
+        message = 'No account found with this phone number. Please contact the gym.';
+      } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        message = 'Incorrect password. Please try again.';
+      } else if (error.code === 'auth/too-many-requests') {
+        message = 'Too many attempts. Please try again later.';
+      }
+      showToast(message, 'error');
+      btn.textContent = 'Login to My Account ✨';
+      btn.disabled = false;
+    });
+
+  return false;
+}
+
+// ===== FORGOT PASSWORD =====
+function toggleForgotPassword() {
+  var section = document.getElementById('forgotPasswordSection');
+  var form = document.getElementById('loginForm');
+  if (section.style.display === 'none') {
+    section.style.display = 'block';
+    form.style.display = 'none';
+  } else {
+    section.style.display = 'none';
+    form.style.display = 'block';
+  }
+}
+
+function handleForgotPassword(e) {
+  e.preventDefault();
+
+  var phone = sanitizePhone(document.getElementById('forgotPhone').value);
+  if (!phone || phone.length !== 10) {
+    showToast('Please enter a valid 10-digit phone number.', 'error');
+    return false;
+  }
+
+  var btn = document.getElementById('resetBtn');
+  btn.textContent = 'Sending...';
+  btn.disabled = true;
+
+  var db = firebase.firestore();
+  db.collection('phoneMap').doc(phone).get()
+    .then(function(doc) {
+      if (!doc.exists) {
+        throw { code: 'not-found' };
+      }
+      var email = doc.data().email;
+      return firebase.auth().sendPasswordResetEmail(email);
+    })
+    .then(function() {
+      showToast('Password reset email sent! Check your inbox. 📧', 'success');
+      btn.textContent = 'Send Reset Link 📧';
+      btn.disabled = false;
+      toggleForgotPassword();
+    })
+    .catch(function(error) {
+      var message = error.code === 'not-found'
+        ? 'No account found with this phone number. Contact the gym.'
+        : 'Failed to send reset email. Please try again.';
+      showToast(message, 'error');
+      btn.textContent = 'Send Reset Link 📧';
+      btn.disabled = false;
+    });
+
+  return false;
+}
+
+// ===== ADMIN LOGIN HANDLER =====
+function handleAdminLogin(e) {
+  e.preventDefault();
+
+  var phone = sanitizePhone(document.getElementById('adminPhone').value);
+  var password = document.getElementById('adminPassword').value.trim();
+
+  if (!phone || !password) {
+    showToast('Please enter phone number and password.', 'error');
+    return false;
+  }
+
+  if (phone !== ADMIN_CONFIG.phone) {
+    showToast('Not authorized. Admin access only.', 'error');
+    return false;
+  }
+
+  var btn = document.getElementById('adminLoginBtn');
+  btn.textContent = 'Logging in...';
+  btn.disabled = true;
+
+  firebase.auth().signInWithEmailAndPassword(ADMIN_CONFIG.email, password)
+    .then(function() {
+      document.getElementById('adminLoginPage').style.display = 'none';
+      document.getElementById('adminDashboard').style.display = 'flex';
+      loadMembersList();
+      loadMembersStats();
+      showToast('Welcome, Admin! 🛡️', 'success');
+    })
+    .catch(function(error) {
+      var message = 'Login failed.';
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        message = 'Incorrect password.';
+      } else if (error.code === 'auth/too-many-requests') {
+        message = 'Too many attempts. Try again later.';
+      }
+      showToast(message, 'error');
+      btn.textContent = 'Login as Admin 🛡️';
+      btn.disabled = false;
+    });
+
+  return false;
+}
+
+// ===== ADMIN: CREATE MEMBER =====
+function handleCreateMember(e) {
+  e.preventDefault();
+
+  var name = document.getElementById('memberName').value.trim();
+  var email = document.getElementById('memberEmail').value.trim();
+  var phone = sanitizePhone(document.getElementById('memberPhone').value);
+  var age = document.getElementById('memberAge').value;
+  var weight = document.getElementById('memberWeight').value;
+  var height = document.getElementById('memberHeight').value;
+  var plan = document.getElementById('memberPlan').value;
+  var goal = document.getElementById('memberGoal').value.trim();
+  var notes = document.getElementById('memberNotes').value.trim();
+
+  if (!name || !email || !phone || phone.length !== 10 || !plan) {
+    showToast('Please fill in all required fields with a valid 10-digit phone.', 'error');
+    return false;
+  }
+
+  var btn = document.getElementById('createMemberBtn');
+  btn.textContent = 'Creating account...';
+  btn.disabled = true;
+
+  var db = firebase.firestore();
+  var tempPassword = generateTempPassword();
+
+  // Check if phone already exists
+  db.collection('phoneMap').doc(phone).get()
+    .then(function(doc) {
+      if (doc.exists) {
+        throw { custom: true, message: 'A member with this phone number already exists.' };
+      }
+
+      // Create user via secondary Firebase app (so admin stays logged in)
+      var secondaryApp = firebase.initializeApp(firebaseConfig, 'Secondary');
+      return secondaryApp.auth().createUserWithEmailAndPassword(email, tempPassword)
+        .then(function(credential) {
+          var uid = credential.user.uid;
+
+          // Update display name
+          return credential.user.updateProfile({ displayName: name }).then(function() {
+            // Sign out from secondary and delete it
+            return secondaryApp.auth().signOut();
+          }).then(function() {
+            return secondaryApp.delete();
+          }).then(function() {
+            // Store member profile in Firestore
+            var batch = db.batch();
+
+            batch.set(db.collection('users').doc(uid), {
+              name: name,
+              email: email,
+              phone: phone,
+              age: age || '',
+              weight: weight || '',
+              height: height || '',
+              plan: plan,
+              goal: goal || '',
+              notes: notes || '',
+              role: 'member',
+              joinedDate: new Date().toISOString()
+            });
+
+            // Store phone → email mapping
+            batch.set(db.collection('phoneMap').doc(phone), {
+              email: email
+            });
+
+            return batch.commit();
+          }).then(function() {
+            // Send password reset email so member sets their own password
+            return firebase.auth().sendPasswordResetEmail(email);
+          });
+        });
+    })
+    .then(function() {
+      showToast('Member "' + name + '" created! Password reset email sent. 🎉', 'success');
+      document.getElementById('createMemberForm').reset();
+      btn.textContent = 'Create Member Account & Send Password Email 📧';
+      btn.disabled = false;
+      loadMembersList();
+      loadMembersStats();
+    })
+    .catch(function(error) {
+      var message = error.custom ? error.message : 'Failed to create member.';
+      if (error.code === 'auth/email-already-in-use') {
+        message = 'An account with this email already exists.';
+      } else if (error.code === 'auth/invalid-email') {
+        message = 'Invalid email address.';
+      }
+      showToast(message, 'error');
+      btn.textContent = 'Create Member Account & Send Password Email 📧';
+      btn.disabled = false;
+
+      // Clean up secondary app if it still exists
+      try { firebase.app('Secondary').delete(); } catch(e) {}
+    });
+
+  return false;
+}
+
+// ===== ADMIN: LOAD MEMBERS LIST =====
+function loadMembersList() {
+  var container = document.getElementById('membersListContainer');
+  if (!container) return;
+
+  container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 40px;">Loading members...</p>';
+
+  var db = firebase.firestore();
+  db.collection('users').where('role', '==', 'member').orderBy('joinedDate', 'desc').get()
+    .then(function(snapshot) {
+      if (snapshot.empty) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 40px;">No members registered yet. Add your first member! 🌸</p>';
+        return;
+      }
+
+      var html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">';
+      html += '<thead><tr style="background: var(--cream-warm); text-align: left;">';
+      html += '<th style="padding: 12px 16px; border-bottom: 2px solid var(--blush);">Name</th>';
+      html += '<th style="padding: 12px 16px; border-bottom: 2px solid var(--blush);">Phone</th>';
+      html += '<th style="padding: 12px 16px; border-bottom: 2px solid var(--blush);">Email</th>';
+      html += '<th style="padding: 12px 16px; border-bottom: 2px solid var(--blush);">Plan</th>';
+      html += '<th style="padding: 12px 16px; border-bottom: 2px solid var(--blush);">Age</th>';
+      html += '<th style="padding: 12px 16px; border-bottom: 2px solid var(--blush);">Joined</th>';
+      html += '</tr></thead><tbody>';
+
+      snapshot.forEach(function(doc) {
+        var m = doc.data();
+        var joined = m.joinedDate ? new Date(m.joinedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+        var planEmoji = m.plan === 'Empress' ? '👑' : (m.plan === 'Radiance' ? '✨' : '🌱');
+
+        html += '<tr style="border-bottom: 1px solid #f0e8e4;">';
+        html += '<td style="padding: 12px 16px; font-weight: 500;">' + escapeHtml(m.name) + '</td>';
+        html += '<td style="padding: 12px 16px;">' + escapeHtml(m.phone) + '</td>';
+        html += '<td style="padding: 12px 16px; font-size: 0.82rem; color: var(--text-medium);">' + escapeHtml(m.email) + '</td>';
+        html += '<td style="padding: 12px 16px;">' + planEmoji + ' ' + escapeHtml(m.plan) + '</td>';
+        html += '<td style="padding: 12px 16px;">' + (m.age || '—') + '</td>';
+        html += '<td style="padding: 12px 16px; font-size: 0.82rem; color: var(--text-light);">' + joined + '</td>';
+        html += '</tr>';
+      });
+
+      html += '</tbody></table></div>';
+      container.innerHTML = html;
+    })
+    .catch(function(error) {
+      container.innerHTML = '<p style="text-align: center; color: #e74c3c; padding: 40px;">Error loading members. Check Firestore setup.</p>';
+    });
+}
+
+// ===== ADMIN: LOAD STATS =====
+function loadMembersStats() {
+  var db = firebase.firestore();
+  db.collection('users').where('role', '==', 'member').get()
+    .then(function(snapshot) {
+      var total = 0, radiance = 0, empress = 0;
+
+      snapshot.forEach(function(doc) {
+        total++;
+        var plan = doc.data().plan;
+        if (plan === 'Radiance') radiance++;
+        if (plan === 'Empress') empress++;
+      });
+
+      var el;
+      el = document.getElementById('totalMembersCount');
+      if (el) el.textContent = total;
+      el = document.getElementById('radianceMembersCount');
+      if (el) el.textContent = radiance;
+      el = document.getElementById('empressMembersCount');
+      if (el) el.textContent = empress;
+    });
+}
+
+// ===== ESCAPE HTML (prevent XSS) =====
+function escapeHtml(text) {
+  if (!text) return '';
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(text));
+  return div.innerHTML;
+}
+
+// ===== ADMIN SECTION SWITCHING =====
+function showAdminSection(sectionId, clickedLink) {
+  var sections = document.querySelectorAll('#adminDashboard .dashboard-section');
+  sections.forEach(function(section) {
+    section.style.display = 'none';
+  });
+
+  var target = document.getElementById('admin-section-' + sectionId);
+  if (target) {
+    target.style.display = 'block';
+  }
+
+  if (clickedLink) {
+    var menuLinks = document.querySelectorAll('#adminDashboard .sidebar-menu a');
+    menuLinks.forEach(function(link) {
+      link.classList.remove('active');
+    });
+    clickedLink.classList.add('active');
+  }
+
+  var pageTitle = document.getElementById('adminPageTitle');
+  if (pageTitle) {
+    var titles = {
+      'overview': 'Overview',
+      'addmember': 'Add New Member',
+      'members': 'All Members'
+    };
+    pageTitle.textContent = titles[sectionId] || 'Overview';
+  }
+
+  if (sectionId === 'members') {
+    loadMembersList();
+  }
+}
+
+// ===== DASHBOARD SECTION SWITCHING =====
+function showSection(sectionId, clickedLink) {
+  var sections = document.querySelectorAll('.dashboard-section');
+  sections.forEach(function(section) {
+    section.style.display = 'none';
+  });
+
+  var target = document.getElementById('section-' + sectionId);
+  if (target) {
+    target.style.display = 'block';
+  }
+
+  if (clickedLink) {
+    var menuLinks = document.querySelectorAll('.sidebar-menu a');
+    menuLinks.forEach(function(link) {
+      link.classList.remove('active');
+    });
+    clickedLink.classList.add('active');
+  }
+
+  var pageTitle = document.getElementById('pageTitle');
+  if (pageTitle) {
+    var titles = {
+      'dashboard': 'Dashboard',
+      'activities': 'Activities & Programs',
+      'classes': 'Class Schedule',
+      'pricing': 'Pricing & Plans',
+      'events': 'Events',
+      'announcements': 'Announcements',
+      'profile': 'My Profile'
+    };
+    pageTitle.textContent = titles[sectionId] || 'Dashboard';
+  }
+
+  var main = document.querySelector('.dashboard-main');
+  if (main) main.scrollTop = 0;
+}
+
+// ===== LOGOUT HANDLER =====
+function handleLogout() {
+  firebase.auth().signOut().then(function() {
+    // Redirect based on current page
+    if (window.location.pathname.includes('admin')) {
+      window.location.href = 'admin.html';
+    } else {
+      window.location.href = 'login.html';
+    }
+  });
+}
+
+// ===== DASHBOARD AUTH CHECK (Member Dashboard) =====
 if (typeof firebase !== 'undefined' && window.location.pathname.includes('dashboard')) {
   firebase.auth().onAuthStateChanged(function(user) {
     if (!user) {
       window.location.href = 'login.html';
     } else {
-      // Update dashboard with user info
-      var displayName = user.displayName || user.email.split('@')[0];
-      var welcomeHeading = document.querySelector('.dashboard-welcome h2');
-      var topbarName = document.querySelector('.topbar-user .user-info strong');
-      var profileName = document.querySelector('#section-profile h4');
+      // Load profile from Firestore
+      var db = firebase.firestore();
+      db.collection('users').doc(user.uid).get()
+        .then(function(doc) {
+          var displayName = user.displayName || user.email.split('@')[0];
+          var plan = '';
 
-      var hour = new Date().getHours();
-      var greeting = hour < 12 ? 'Good Morning' : (hour < 17 ? 'Good Afternoon' : 'Good Evening');
+          if (doc.exists) {
+            var data = doc.data();
+            displayName = data.name || displayName;
+            plan = data.plan || '';
 
-      if (welcomeHeading) welcomeHeading.textContent = greeting + ', ' + displayName + '! ☀️';
-      if (topbarName) topbarName.textContent = displayName;
+            // Update profile section if it exists
+            var profileName = document.querySelector('#section-profile .user-full-name');
+            var profileEmail = document.querySelector('#section-profile .user-email');
+            var profilePhone = document.querySelector('#section-profile .user-phone');
+            var profilePlan = document.querySelector('#section-profile .user-plan');
+
+            if (profileName) profileName.textContent = data.name || '';
+            if (profileEmail) profileEmail.textContent = data.email || '';
+            if (profilePhone) profilePhone.textContent = data.phone || '';
+            if (profilePlan) profilePlan.textContent = data.plan || '';
+          }
+
+          var welcomeHeading = document.querySelector('.dashboard-welcome h2');
+          var topbarName = document.querySelector('.topbar-user .user-info strong');
+
+          var hour = new Date().getHours();
+          var greeting = hour < 12 ? 'Good Morning' : (hour < 17 ? 'Good Afternoon' : 'Good Evening');
+
+          if (welcomeHeading) welcomeHeading.textContent = greeting + ', ' + displayName + '! ☀️';
+          if (topbarName) topbarName.textContent = displayName;
+        });
     }
   });
 }
 
-// Redirect away from login page if already logged in
-if (typeof firebase !== 'undefined' && (window.location.pathname.includes('login') || window.location.pathname.endsWith('login.html'))) {
+// ===== ADMIN AUTH CHECK =====
+if (typeof firebase !== 'undefined' && window.location.pathname.includes('admin')) {
   firebase.auth().onAuthStateChanged(function(user) {
-    if (user) {
+    if (user && user.email === ADMIN_CONFIG.email) {
+      // Admin is already logged in
+      document.getElementById('adminLoginPage').style.display = 'none';
+      document.getElementById('adminDashboard').style.display = 'flex';
+      loadMembersList();
+      loadMembersStats();
+    }
+  });
+}
+
+// ===== REDIRECT LOGGED-IN USERS FROM LOGIN PAGE =====
+if (typeof firebase !== 'undefined' && window.location.pathname.includes('login') && !window.location.pathname.includes('admin')) {
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (user && user.email !== ADMIN_CONFIG.email) {
       window.location.href = 'dashboard.html';
     }
   });
