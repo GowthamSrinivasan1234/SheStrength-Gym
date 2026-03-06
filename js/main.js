@@ -715,9 +715,14 @@ function handleAdminPhotoUpload(input) {
     if (img) { img.src = url; img.style.display = 'block'; }
     if (emoji) emoji.style.display = 'none';
     showToast('Profile photo updated! 📸', 'success');
-  }).catch(function() {
-    showToast('Failed to upload photo. Try again.', 'error');
+  }).catch(function(err) {
+    if (err && err.code && err.code.indexOf('storage') !== -1) {
+      showToast('📷 Photo upload is not enabled yet. Contact admin.', 'error');
+    } else {
+      showToast('Failed to upload photo. Try again.', 'error');
+    }
   });
+  input.value = '';
 }
 
 // ===== PHOTO UPLOAD (Member) =====
@@ -742,9 +747,14 @@ function handleMemberPhotoUpload(input) {
     if (img) { img.src = url; img.style.display = 'block'; }
     if (emoji) emoji.style.display = 'none';
     showToast('Profile photo updated! 📸', 'success');
-  }).catch(function() {
-    showToast('Failed to upload photo. Try again.', 'error');
+  }).catch(function(err) {
+    if (err && err.code && err.code.indexOf('storage') !== -1) {
+      showToast('📷 Photo upload is not enabled yet. Contact admin.', 'error');
+    } else {
+      showToast('Failed to upload photo. Try again.', 'error');
+    }
   });
+  input.value = '';
 }
 
 // ===== ADMIN SECTION SWITCHING =====
