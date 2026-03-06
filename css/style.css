@@ -2229,6 +2229,10 @@ img {
   .stats-grid {
     grid-template-columns: 1fr 1fr;
   }
+
+  #ptChartsRow {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 @media (max-width: 480px) {
