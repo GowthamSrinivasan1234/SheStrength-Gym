@@ -886,6 +886,63 @@
           <p>Your trainer logs your workout progress here. Keep crushing it!</p>
         </div>
 
+        <!-- Motivational Banner -->
+        <div id="ptMotivationBanner" style="display: none; margin-top: 20px; padding: 24px 28px; border-radius: 16px; background: linear-gradient(135deg, #fff0f5, #fce4ec, #f3e5f5); border: 1px solid var(--blush-light); text-align: center;">
+          <div id="ptMotivationEmoji" style="font-size: 3rem; margin-bottom: 8px;">💪</div>
+          <h3 id="ptMotivationTitle" style="font-family: 'Playfair Display', serif; color: var(--plum); font-size: 1.3rem; margin-bottom: 6px;">You're doing amazing!</h3>
+          <p id="ptMotivationText" style="color: var(--text-medium); font-size: 0.92rem;">Every workout brings you closer to your best self.</p>
+        </div>
+
+        <!-- Quick Stats -->
+        <div id="ptStatsGrid" style="display: none; margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px;">
+          <div class="dash-card" style="text-align: center; padding: 20px 12px;">
+            <div style="font-size: 2rem;">🔥</div>
+            <div id="ptStatTotalCal" style="font-size: 1.6rem; font-weight: 700; color: var(--plum); font-family: 'Playfair Display', serif;">0</div>
+            <div style="font-size: 0.78rem; color: var(--text-light); margin-top: 2px;">Total Calories</div>
+          </div>
+          <div class="dash-card" style="text-align: center; padding: 20px 12px;">
+            <div style="font-size: 2rem;">💪</div>
+            <div id="ptStatSessions" style="font-size: 1.6rem; font-weight: 700; color: var(--plum); font-family: 'Playfair Display', serif;">0</div>
+            <div style="font-size: 0.78rem; color: var(--text-light); margin-top: 2px;">Workouts Done</div>
+          </div>
+          <div class="dash-card" style="text-align: center; padding: 20px 12px;">
+            <div style="font-size: 2rem;">⏱️</div>
+            <div id="ptStatTotalMin" style="font-size: 1.6rem; font-weight: 700; color: var(--plum); font-family: 'Playfair Display', serif;">0</div>
+            <div style="font-size: 0.78rem; color: var(--text-light); margin-top: 2px;">Total Minutes</div>
+          </div>
+          <div class="dash-card" style="text-align: center; padding: 20px 12px;">
+            <div style="font-size: 2rem;">🔥</div>
+            <div id="ptStatStreak" style="font-size: 1.6rem; font-weight: 700; color: var(--rose); font-family: 'Playfair Display', serif;">0</div>
+            <div style="font-size: 0.78rem; color: var(--text-light); margin-top: 2px;">Week Streak</div>
+          </div>
+        </div>
+
+        <!-- Charts -->
+        <div id="ptChartsRow" style="display: none; margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="dash-card">
+            <h3 style="margin-bottom: 12px; font-size: 1rem;">🔥 Calories Burned</h3>
+            <canvas id="ptCaloriesChart" height="220"></canvas>
+          </div>
+          <div class="dash-card">
+            <h3 style="margin-bottom: 12px; font-size: 1rem;">🏋️ Workout Types</h3>
+            <canvas id="ptTypesChart" height="220"></canvas>
+          </div>
+        </div>
+        <div id="ptWeightChartRow" style="display: none; margin-top: 20px;">
+          <div class="dash-card">
+            <h3 style="margin-bottom: 12px; font-size: 1rem;">⚖️ Weight Progress</h3>
+            <canvas id="ptWeightChart" height="180"></canvas>
+          </div>
+        </div>
+
+        <!-- Achievement Badges -->
+        <div id="ptBadgesCard" style="display: none; margin-top: 20px;" class="dash-card">
+          <h3 style="margin-bottom: 16px;">🏆 Your Achievements</h3>
+          <div id="ptBadgesContainer" style="display: flex; flex-wrap: wrap; gap: 12px;"></div>
+        </div>
+
+        <!-- Workout History -->
+        <h3 id="ptHistoryTitle" style="display: none; margin-top: 28px; margin-bottom: 4px; font-family: 'Playfair Display', serif; color: var(--plum); font-size: 1.15rem;">📋 Recent Workouts</h3>
         <div id="myPTProgressContainer">
           <div class="dash-card" style="margin-top: 20px;">
             <p style="text-align: center; color: var(--text-light); padding: 40px;">Loading your training progress...</p>
@@ -972,6 +1029,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

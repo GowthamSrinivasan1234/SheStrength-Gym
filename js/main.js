@@ -777,36 +777,264 @@ function handleSaveProfile(e) {
 }
 
 // ===== MEMBER: LOAD MY PT PROGRESS =====
+var ptCaloriesChartInst = null;
+var ptTypesChartInst = null;
+var ptWeightChartInst = null;
+
 function loadMyPTProgress(uid) {
   var container = document.getElementById('myPTProgressContainer');
   if (!container) return;
 
   var db = firebase.firestore();
-  db.collection('progress').doc(uid).collection('logs').orderBy('date', 'desc').limit(20).get()
+  db.collection('progress').doc(uid).collection('logs').orderBy('date', 'desc').limit(50).get()
     .then(function(snapshot) {
       if (snapshot.empty) {
         container.innerHTML = '<div class="dash-card" style="margin-top: 20px;"><p style="text-align: center; color: var(--text-light); padding: 40px;">No training progress logged yet. Your trainer will update this for you! 💪</p></div>';
         return;
       }
 
+      // ---- Collect all entries (chronological for charts) ----
+      var entries = [];
+      snapshot.forEach(function(doc) { entries.push(doc.data()); });
+      var chronological = entries.slice().reverse(); // oldest first for charts
+
+      // ---- Compute Stats ----
+      var totalCal = 0, totalMin = 0, totalSessions = entries.length;
+      var typeCounts = {};
+      var calDates = [], calValues = [];
+      var weightDates = [], weightValues = [];
+      var workoutWeeks = {};
+
+      chronological.forEach(function(p) {
+        if (p.calories) totalCal += parseInt(p.calories) || 0;
+        if (p.duration) totalMin += parseInt(p.duration) || 0;
+        if (p.sessionType) typeCounts[p.sessionType] = (typeCounts[p.sessionType] || 0) + 1;
+        if (p.calories && p.date) { calDates.push(p.date); calValues.push(parseInt(p.calories) || 0); }
+        if (p.weight && p.date) { weightDates.push(p.date); weightValues.push(parseFloat(p.weight) || 0); }
+        if (p.date) {
+          var d = new Date(p.date);
+          var weekStart = new Date(d); weekStart.setDate(d.getDate() - d.getDay());
+          workoutWeeks[weekStart.toISOString().split('T')[0]] = true;
+        }
+      });
+
+      // Streak: consecutive weeks with at least 1 workout
+      var weekKeys = Object.keys(workoutWeeks).sort().reverse();
+      var streak = 0;
+      if (weekKeys.length > 0) {
+        var now = new Date(); now.setDate(now.getDate() - now.getDay());
+        var currentWeek = now.toISOString().split('T')[0];
+        // Allow current or previous week as starting point
+        if (weekKeys[0] === currentWeek || weekKeys.indexOf(currentWeek) >= 0) {
+          for (var wi = 0; wi < weekKeys.length; wi++) {
+            var expected = new Date(now); expected.setDate(expected.getDate() - (wi * 7));
+            if (weekKeys.indexOf(expected.toISOString().split('T')[0]) >= 0) streak++;
+            else break;
+          }
+        } else {
+          streak = 1; // at least had workouts
+        }
+      }
+
+      // ---- Show Stats Grid ----
+      var statsGrid = document.getElementById('ptStatsGrid');
+      if (statsGrid) {
+        statsGrid.style.display = 'grid';
+        document.getElementById('ptStatTotalCal').textContent = totalCal.toLocaleString();
+        document.getElementById('ptStatSessions').textContent = totalSessions;
+        document.getElementById('ptStatTotalMin').textContent = totalMin.toLocaleString();
+        document.getElementById('ptStatStreak').textContent = streak;
+      }
+
+      // ---- Motivation Banner ----
+      var banner = document.getElementById('ptMotivationBanner');
+      if (banner) {
+        banner.style.display = 'block';
+        var motivations = [
+          { emoji: '🔥', title: 'You\'re on fire!', text: 'Every rep counts. You\'ve burned ' + totalCal.toLocaleString() + ' calories so far!' },
+          { emoji: '💪', title: 'Stronger every day!', text: totalSessions + ' workouts completed. Your consistency is inspiring!' },
+          { emoji: '⭐', title: 'Star performer!', text: 'You\'ve trained for ' + totalMin.toLocaleString() + ' minutes total. That\'s incredible dedication!' },
+          { emoji: '🏆', title: 'Champion vibes!', text: streak + '-week streak! Keep showing up and magic happens.' },
+          { emoji: '🌟', title: 'You\'re unstoppable!', text: 'Hard work beats talent. You\'re proving it every session!' },
+          { emoji: '💜', title: 'Queen of the gym!', text: 'Your strength journey is beautiful. Keep going, warrior!' }
+        ];
+        var m = motivations[Math.floor(Math.random() * motivations.length)];
+        document.getElementById('ptMotivationEmoji').textContent = m.emoji;
+        document.getElementById('ptMotivationTitle').textContent = m.title;
+        document.getElementById('ptMotivationText').textContent = m.text;
+      }
+
+      // ---- Achievement Badges ----
+      var badgesCard = document.getElementById('ptBadgesCard');
+      var badgesContainer = document.getElementById('ptBadgesContainer');
+      if (badgesCard && badgesContainer) {
+        var badges = [];
+        if (totalSessions >= 1) badges.push({ icon: '🌱', label: 'First Workout', color: '#e8f5e9' });
+        if (totalSessions >= 5) badges.push({ icon: '⭐', label: '5 Sessions', color: '#fff3e0' });
+        if (totalSessions >= 10) badges.push({ icon: '🔥', label: '10 Sessions', color: '#fce4ec' });
+        if (totalSessions >= 25) badges.push({ icon: '💎', label: '25 Sessions', color: '#e3f2fd' });
+        if (totalSessions >= 50) badges.push({ icon: '👑', label: '50 Sessions', color: '#f3e5f5' });
+        if (totalCal >= 1000) badges.push({ icon: '🔥', label: '1K Cal Burned', color: '#fff8e1' });
+        if (totalCal >= 5000) badges.push({ icon: '🌋', label: '5K Cal Burned', color: '#fbe9e7' });
+        if (totalCal >= 10000) badges.push({ icon: '☄️', label: '10K Cal Burned', color: '#ffebee' });
+        if (totalMin >= 300) badges.push({ icon: '⏰', label: '5 Hours Trained', color: '#e0f7fa' });
+        if (totalMin >= 600) badges.push({ icon: '🕐', label: '10 Hours Trained', color: '#e8eaf6' });
+        if (streak >= 2) badges.push({ icon: '🔗', label: streak + '-Week Streak', color: '#f1f8e9' });
+        if (streak >= 4) badges.push({ icon: '💪', label: 'Month Warrior', color: '#ede7f6' });
+
+        if (badges.length > 0) {
+          badgesCard.style.display = 'block';
+          var bhtml = '';
+          badges.forEach(function(b) {
+            bhtml += '<div style="display: flex; align-items: center; gap: 8px; background: ' + b.color + '; padding: 10px 16px; border-radius: 12px; min-width: 120px;">';
+            bhtml += '<span style="font-size: 1.4rem;">' + b.icon + '</span>';
+            bhtml += '<span style="font-size: 0.82rem; font-weight: 600; color: var(--plum);">' + b.label + '</span>';
+            bhtml += '</div>';
+          });
+          badgesContainer.innerHTML = bhtml;
+        }
+      }
+
+      // ---- Charts ----
+      if (typeof Chart !== 'undefined') {
+        // Calories Chart (line)
+        var chartsRow = document.getElementById('ptChartsRow');
+        if (chartsRow && calValues.length >= 2) {
+          chartsRow.style.display = 'grid';
+          var calCtx = document.getElementById('ptCaloriesChart').getContext('2d');
+          if (ptCaloriesChartInst) ptCaloriesChartInst.destroy();
+          ptCaloriesChartInst = new Chart(calCtx, {
+            type: 'line',
+            data: {
+              labels: calDates.map(function(d) { return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }); }),
+              datasets: [{
+                label: 'Calories Burned',
+                data: calValues,
+                borderColor: '#E8728A',
+                backgroundColor: 'rgba(232,114,138,0.15)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#C94C6E',
+                pointRadius: 5,
+                pointHoverRadius: 7
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+              }
+            }
+          });
+        }
+
+        // Workout Types Chart (doughnut)
+        var typeLabels = Object.keys(typeCounts);
+        if (chartsRow && typeLabels.length >= 1) {
+          chartsRow.style.display = 'grid';
+          var typeCtx = document.getElementById('ptTypesChart').getContext('2d');
+          var typeColors = ['#E8728A', '#6B2D5B', '#F4A0B5', '#a855f7', '#f59e0b', '#10b981', '#3b82f6', '#ec4899'];
+          if (ptTypesChartInst) ptTypesChartInst.destroy();
+          ptTypesChartInst = new Chart(typeCtx, {
+            type: 'doughnut',
+            data: {
+              labels: typeLabels,
+              datasets: [{
+                data: typeLabels.map(function(k) { return typeCounts[k]; }),
+                backgroundColor: typeColors.slice(0, typeLabels.length),
+                borderWidth: 2,
+                borderColor: '#fff'
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: {
+                legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } }
+              }
+            }
+          });
+        }
+
+        // Weight Progress Chart (line)
+        var weightRow = document.getElementById('ptWeightChartRow');
+        if (weightRow && weightValues.length >= 2) {
+          weightRow.style.display = 'block';
+          var weightCtx = document.getElementById('ptWeightChart').getContext('2d');
+          if (ptWeightChartInst) ptWeightChartInst.destroy();
+          ptWeightChartInst = new Chart(weightCtx, {
+            type: 'line',
+            data: {
+              labels: weightDates.map(function(d) { return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }); }),
+              datasets: [{
+                label: 'Weight (kg)',
+                data: weightValues,
+                borderColor: '#6B2D5B',
+                backgroundColor: 'rgba(107,45,91,0.1)',
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: '#6B2D5B',
+                pointRadius: 5,
+                pointHoverRadius: 7
+              }]
+            },
+            options: {
+              responsive: true,
+              plugins: { legend: { display: false } },
+              scales: {
+                y: { grid: { color: 'rgba(0,0,0,0.05)' } },
+                x: { grid: { display: false } }
+              }
+            }
+          });
+        }
+      }
+
+      // ---- Workout History Cards ----
+      var histTitle = document.getElementById('ptHistoryTitle');
+      if (histTitle) histTitle.style.display = 'block';
+
       var html = '';
-      snapshot.forEach(function(doc) {
-        var p = doc.data();
+      entries.forEach(function(p) {
         var intensityColor = p.intensity === 'Intense' ? '#e74c3c' : (p.intensity === 'High' ? '#f39c12' : (p.intensity === 'Moderate' ? '#f1c40f' : '#2ecc71'));
-        html += '<div class="dash-card" style="margin-top: 16px;">';
+        var sessionIcon = {
+          'Strength Training': '🏋️', 'Cardio': '🏃‍♀️', 'HIIT': '⚡', 'Flexibility & Mobility': '🧘‍♀️',
+          'Full Body': '💪', 'Upper Body': '🤸‍♀️', 'Lower Body': '🦵', 'Core': '🔥'
+        };
+        var icon = sessionIcon[p.sessionType] || '🏋️';
+
+        html += '<div class="dash-card" style="margin-top: 16px; border-left: 4px solid ' + intensityColor + ';">';
         html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">';
-        html += '<h4 style="color: var(--plum);">📅 ' + escapeHtml(p.date || '—') + '</h4>';
+        html += '<div style="display: flex; align-items: center; gap: 10px;">';
+        html += '<span style="font-size: 1.6rem;">' + icon + '</span>';
+        html += '<div>';
+        html += '<h4 style="color: var(--plum); margin: 0;">' + escapeHtml(p.sessionType || 'Workout') + '</h4>';
+        html += '<span style="font-size: 0.82rem; color: var(--text-light);">📅 ' + escapeHtml(p.date || '—') + '</span>';
+        html += '</div></div>';
         html += '<div style="display: flex; gap: 8px; flex-wrap: wrap;">';
-        if (p.sessionType) html += '<span style="background: var(--lavender); padding: 5px 14px; border-radius: 20px; font-size: 0.82rem;">' + escapeHtml(p.sessionType) + '</span>';
-        if (p.intensity) html += '<span style="background: ' + intensityColor + '; color: white; padding: 5px 14px; border-radius: 20px; font-size: 0.82rem;">' + escapeHtml(p.intensity) + '</span>';
+        if (p.intensity) html += '<span style="background: ' + intensityColor + '; color: white; padding: 4px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 500;">' + escapeHtml(p.intensity) + '</span>';
         html += '</div></div>';
-        html += '<div class="activity-list">';
-        html += '<div class="activity-item"><div class="activity-icon">🏋️</div><div class="activity-details"><strong>Exercises</strong><span style="white-space: pre-line;">' + escapeHtml(p.exercises) + '</span></div></div>';
-        if (p.duration) html += '<div class="activity-item"><div class="activity-icon">⏱️</div><div class="activity-details"><strong>Duration</strong><span>' + escapeHtml(String(p.duration)) + ' minutes</span></div></div>';
-        if (p.calories) html += '<div class="activity-item"><div class="activity-icon">🔥</div><div class="activity-details"><strong>Calories Burned</strong><span>' + escapeHtml(String(p.calories)) + ' cal</span></div></div>';
-        if (p.weight) html += '<div class="activity-item"><div class="activity-icon">⚖️</div><div class="activity-details"><strong>Weight</strong><span>' + escapeHtml(String(p.weight)) + ' kg</span></div></div>';
-        if (p.trainerNotes) html += '<div class="activity-item"><div class="activity-icon">🗒️</div><div class="activity-details"><strong>Trainer Notes</strong><span>' + escapeHtml(p.trainerNotes) + '</span></div></div>';
-        html += '</div></div>';
+
+        // Quick stats bar
+        html += '<div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 14px; padding: 12px 16px; background: var(--blush-light); border-radius: 10px;">';
+        if (p.duration) html += '<div style="text-align: center;"><div style="font-size: 1.1rem; font-weight: 700; color: var(--plum);">' + escapeHtml(String(p.duration)) + '</div><div style="font-size: 0.72rem; color: var(--text-light);">minutes</div></div>';
+        if (p.calories) html += '<div style="text-align: center;"><div style="font-size: 1.1rem; font-weight: 700; color: var(--rose);">' + escapeHtml(String(p.calories)) + '</div><div style="font-size: 0.72rem; color: var(--text-light);">calories</div></div>';
+        if (p.weight) html += '<div style="text-align: center;"><div style="font-size: 1.1rem; font-weight: 700; color: var(--plum);">' + escapeHtml(String(p.weight)) + '</div><div style="font-size: 0.72rem; color: var(--text-light);">kg</div></div>';
+        html += '</div>';
+
+        // Exercises
+        html += '<div style="margin-bottom: 8px;"><strong style="font-size: 0.85rem; color: var(--text-dark);">Exercises:</strong>';
+        html += '<p style="font-size: 0.88rem; color: var(--text-medium); white-space: pre-line; margin-top: 4px; line-height: 1.6;">' + escapeHtml(p.exercises) + '</p></div>';
+
+        if (p.trainerNotes) {
+          html += '<div style="background: linear-gradient(135deg, #f3e5f5, #fce4ec); padding: 12px 16px; border-radius: 10px; margin-top: 8px;">';
+          html += '<span style="font-size: 0.82rem; font-weight: 600; color: var(--plum);">🗒️ Trainer says:</span>';
+          html += '<p style="font-size: 0.85rem; color: var(--text-dark); margin-top: 4px; font-style: italic;">"' + escapeHtml(p.trainerNotes) + '"</p>';
+          html += '</div>';
+        }
+
+        html += '</div>';
       });
 
       container.innerHTML = html;
