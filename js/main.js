@@ -447,6 +447,38 @@ function loadMembersStats() {
     });
 }
 
+// ===== ADMIN: ENABLE PT FOR MEMBER =====
+function enablePT(uid, name) {
+  if (!confirm('Enable Personal Training for ' + name + '? This will change their plan to PT.')) return;
+
+  var db = firebase.firestore();
+  db.collection('users').doc(uid).update({ plan: 'Personal Training' })
+    .then(function() {
+      showToast(name + ' is now a PT member! \ud83c\udfcb\ufe0f', 'success');
+      loadMembersList();
+      loadMembersStats();
+    })
+    .catch(function() {
+      showToast('Failed to update. Try again.', 'error');
+    });
+}
+
+// ===== ADMIN: ENABLE PT FOR MEMBER =====
+function enablePT(uid, name) {
+  if (!confirm('Enable Personal Training for ' + name + '? This will change their plan to PT.')) return;
+
+  var db = firebase.firestore();
+  db.collection('users').doc(uid).update({ plan: 'Personal Training' })
+    .then(function() {
+      showToast(name + ' is now a PT member! 🏋️', 'success');
+      loadMembersList();
+      loadMembersStats();
+    })
+    .catch(function() {
+      showToast('Failed to update. Try again.', 'error');
+    });
+}
+
 // ===== ESCAPE HTML (prevent XSS) =====
 function escapeHtml(text) {
   if (!text) return '';
@@ -650,14 +682,20 @@ function loadPTProgress(uid) {
       snapshot.forEach(function(doc) {
         var p = doc.data();
         var date = p.date || '—';
+        var intensityColor = p.intensity === 'Intense' ? '#e74c3c' : (p.intensity === 'High' ? '#f39c12' : (p.intensity === 'Moderate' ? '#f1c40f' : '#2ecc71'));
         html += '<div style="border: 1px solid var(--blush-light); border-radius: 12px; padding: 16px; margin-bottom: 12px;">';
-        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">';
+        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">';
         html += '<strong style="color: var(--plum);">📅 ' + escapeHtml(date) + '</strong>';
-        if (p.weight) html += '<span style="background: var(--blush-light); padding: 4px 12px; border-radius: 20px; font-size: 0.82rem;">⚖️ ' + escapeHtml(String(p.weight)) + ' kg</span>';
+        html += '<div style="display: flex; gap: 8px; flex-wrap: wrap;">';
+        if (p.sessionType) html += '<span style="background: var(--lavender); padding: 4px 12px; border-radius: 20px; font-size: 0.78rem;">' + escapeHtml(p.sessionType) + '</span>';
+        if (p.intensity) html += '<span style="background: ' + intensityColor + '; color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.78rem;">' + escapeHtml(p.intensity) + '</span>';
+        html += '</div></div>';
+        html += '<p style="font-size: 0.88rem; color: var(--text-dark); margin-bottom: 8px; white-space: pre-line;"><strong>Exercises:</strong>\n' + escapeHtml(p.exercises) + '</p>';
+        html += '<div style="display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 6px;">';
+        if (p.duration) html += '<span style="font-size: 0.84rem; color: var(--text-medium);">⏱️ ' + escapeHtml(String(p.duration)) + ' min</span>';
+        if (p.calories) html += '<span style="font-size: 0.84rem; color: var(--text-medium);">🔥 ' + escapeHtml(String(p.calories)) + ' cal</span>';
+        if (p.weight) html += '<span style="font-size: 0.84rem; color: var(--text-medium);">⚖️ ' + escapeHtml(String(p.weight)) + ' kg</span>';
         html += '</div>';
-        html += '<p style="font-size: 0.88rem; color: var(--text-dark); margin-bottom: 6px;"><strong>Workout:</strong> ' + escapeHtml(p.exercises) + '</p>';
-        if (p.bodyFat) html += '<p style="font-size: 0.84rem; color: var(--text-medium);">Body Fat: ' + escapeHtml(String(p.bodyFat)) + '%</p>';
-        if (p.measurements) html += '<p style="font-size: 0.84rem; color: var(--text-medium);">Measurements: ' + escapeHtml(p.measurements) + '</p>';
         if (p.trainerNotes) html += '<p style="font-size: 0.84rem; color: var(--rose); margin-top: 6px;">🗒️ ' + escapeHtml(p.trainerNotes) + '</p>';
         html += '</div>';
       });
@@ -683,22 +721,24 @@ function handleAddProgress(e) {
   var db = firebase.firestore();
   db.collection('progress').doc(uid).collection('logs').add({
     date: document.getElementById('ptDate').value,
-    weight: document.getElementById('ptWeight').value || '',
+    sessionType: document.getElementById('ptSessionType').value,
     exercises: document.getElementById('ptExercises').value.trim(),
-    bodyFat: document.getElementById('ptBodyFat').value || '',
-    measurements: document.getElementById('ptMeasurements').value.trim(),
+    duration: document.getElementById('ptDuration').value || '',
+    calories: document.getElementById('ptCalories').value || '',
+    weight: document.getElementById('ptWeight').value || '',
+    intensity: document.getElementById('ptIntensity').value,
     trainerNotes: document.getElementById('ptTrainerNotes').value.trim(),
     addedAt: new Date().toISOString()
   }).then(function() {
-    showToast('Progress entry added! 📊', 'success');
+    showToast('Workout logged! 🏋️', 'success');
     document.getElementById('ptProgressForm').reset();
     document.getElementById('ptDate').value = new Date().toISOString().split('T')[0];
-    btn.textContent = 'Add Progress Entry 📊';
+    btn.textContent = 'Log Workout 🏋️';
     btn.disabled = false;
     loadPTProgress(uid);
   }).catch(function() {
     showToast('Failed to add entry.', 'error');
-    btn.textContent = 'Add Progress Entry 📊';
+    btn.textContent = 'Log Workout 🏋️';
     btn.disabled = false;
   });
 
@@ -752,15 +792,19 @@ function loadMyPTProgress(uid) {
       var html = '';
       snapshot.forEach(function(doc) {
         var p = doc.data();
+        var intensityColor = p.intensity === 'Intense' ? '#e74c3c' : (p.intensity === 'High' ? '#f39c12' : (p.intensity === 'Moderate' ? '#f1c40f' : '#2ecc71'));
         html += '<div class="dash-card" style="margin-top: 16px;">';
-        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">';
+        html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">';
         html += '<h4 style="color: var(--plum);">📅 ' + escapeHtml(p.date || '—') + '</h4>';
-        if (p.weight) html += '<span style="background: var(--blush-light); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 500;">⚖️ ' + escapeHtml(String(p.weight)) + ' kg</span>';
-        html += '</div>';
+        html += '<div style="display: flex; gap: 8px; flex-wrap: wrap;">';
+        if (p.sessionType) html += '<span style="background: var(--lavender); padding: 5px 14px; border-radius: 20px; font-size: 0.82rem;">' + escapeHtml(p.sessionType) + '</span>';
+        if (p.intensity) html += '<span style="background: ' + intensityColor + '; color: white; padding: 5px 14px; border-radius: 20px; font-size: 0.82rem;">' + escapeHtml(p.intensity) + '</span>';
+        html += '</div></div>';
         html += '<div class="activity-list">';
-        html += '<div class="activity-item"><div class="activity-icon">🏋️</div><div class="activity-details"><strong>Workout</strong><span>' + escapeHtml(p.exercises) + '</span></div></div>';
-        if (p.bodyFat) html += '<div class="activity-item"><div class="activity-icon">📊</div><div class="activity-details"><strong>Body Fat</strong><span>' + escapeHtml(String(p.bodyFat)) + '%</span></div></div>';
-        if (p.measurements) html += '<div class="activity-item"><div class="activity-icon">📏</div><div class="activity-details"><strong>Measurements</strong><span>' + escapeHtml(p.measurements) + '</span></div></div>';
+        html += '<div class="activity-item"><div class="activity-icon">🏋️</div><div class="activity-details"><strong>Exercises</strong><span style="white-space: pre-line;">' + escapeHtml(p.exercises) + '</span></div></div>';
+        if (p.duration) html += '<div class="activity-item"><div class="activity-icon">⏱️</div><div class="activity-details"><strong>Duration</strong><span>' + escapeHtml(String(p.duration)) + ' minutes</span></div></div>';
+        if (p.calories) html += '<div class="activity-item"><div class="activity-icon">🔥</div><div class="activity-details"><strong>Calories Burned</strong><span>' + escapeHtml(String(p.calories)) + ' cal</span></div></div>';
+        if (p.weight) html += '<div class="activity-item"><div class="activity-icon">⚖️</div><div class="activity-details"><strong>Weight</strong><span>' + escapeHtml(String(p.weight)) + ' kg</span></div></div>';
         if (p.trainerNotes) html += '<div class="activity-item"><div class="activity-icon">🗒️</div><div class="activity-details"><strong>Trainer Notes</strong><span>' + escapeHtml(p.trainerNotes) + '</span></div></div>';
         html += '</div></div>';
       });
