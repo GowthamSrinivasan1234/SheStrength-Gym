@@ -656,6 +656,18 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// ===== ADMIN: LOAD ADMIN PROFILE =====
+function loadAdminProfile(user) {
+  var db = firebase.firestore();
+  db.collection('users').doc(user.uid).get().then(function(doc) {
+    var name = (doc.exists && doc.data().name) ? doc.data().name : (user.displayName || user.email.split('@')[0]);
+    var el = document.getElementById('adminDisplayName');
+    if (el) el.textContent = name;
+    var wel = document.getElementById('adminWelcomeText');
+    if (wel) wel.textContent = 'Welcome, ' + name + '! 🛡️';
+  });
+}
+
 // ===== ADMIN SECTION SWITCHING =====
 function showAdminSection(sectionId, clickedLink) {
   var sections = document.querySelectorAll('#adminDashboard .dashboard-section');
@@ -1299,6 +1311,7 @@ if (typeof firebase !== 'undefined' && window.location.pathname.includes('admin'
     // Check hardcoded admin or Firestore role
     if (isAdminEmail(user.email)) {
       document.getElementById('adminDashboard').style.display = 'flex';
+      loadAdminProfile(user);
       loadMembersList();
       loadMembersStats();
     } else {
@@ -1306,6 +1319,7 @@ if (typeof firebase !== 'undefined' && window.location.pathname.includes('admin'
       firebase.firestore().collection('users').doc(user.uid).get().then(function(doc) {
         if (doc.exists && doc.data().role === 'admin') {
           document.getElementById('adminDashboard').style.display = 'flex';
+          loadAdminProfile(user);
           loadMembersList();
           loadMembersStats();
         } else {
