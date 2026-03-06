@@ -56,7 +56,12 @@
             <strong id="adminDisplayName">Admin</strong>
             <small>Admin</small>
           </div>
-          <div class="avatar" style="background: linear-gradient(135deg, #3D2836, #6B2D5B);">🛡️</div>
+          <div class="avatar" id="adminAvatar" style="background: linear-gradient(135deg, #3D2836, #6B2D5B); position: relative; cursor: pointer; overflow: hidden;" onclick="document.getElementById('adminPhotoInput').click()">
+            <span id="adminAvatarEmoji">🛡️</span>
+            <img id="adminAvatarImg" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; position: absolute; top: 0; left: 0;">
+            <input type="file" id="adminPhotoInput" accept="image/*" style="display: none;" onchange="handleAdminPhotoUpload(this)">
+            <div style="position: absolute; bottom: -2px; right: -2px; background: var(--rose); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; border: 2px solid white;">✏️</div>
+          </div>
         </div>
       </div>
 
@@ -365,6 +370,7 @@ Treadmill — 15 min" style="min-height: 120px;" required></textarea>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
