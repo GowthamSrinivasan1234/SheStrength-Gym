@@ -49,8 +49,8 @@
 
         <form class="login-form" id="loginForm" onsubmit="return handleLogin(event)">
           <div class="form-group">
-            <label for="memberId">Member ID</label>
-            <input type="text" id="memberId" placeholder="e.g., SS-2026-001" required>
+            <label for="memberEmail">Member Email</label>
+            <input type="email" id="memberEmail" placeholder="e.g., priya@shestrength.com" required>
           </div>
 
           <div class="form-group">
@@ -73,7 +73,7 @@
         <div class="login-note">
           <strong>🔒 No signup needed!</strong><br>
           Visit our gym in Salem, choose your membership plan, and we'll create your account. 
-          Your Member ID & password will be shared with you at the gym.
+          Your login email & password will be shared with you at the gym.
         </div>
 
         <div class="back-to-home">
@@ -83,6 +83,8 @@
     </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
