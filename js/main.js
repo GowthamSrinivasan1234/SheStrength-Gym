@@ -678,7 +678,7 @@ function loadAdminProfile(user) {
       setAdminDisplayName(adminName);
     } else {
       var data = doc.data();
-      var displayName = data.name || 'Gowtham';
+      var displayName = data.name || user.displayName || user.email.split('@')[0];
       // Always fix name for primary admin
       if (user.email === ADMIN_CONFIG.email) {
         displayName = 'Gowtham';
