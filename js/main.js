@@ -23,6 +23,36 @@ var ADMIN_CONFIG = {
   email: 'gowthamsrinivasan1234@gmail.com'
 };
 
+// List of admin emails (loaded from Firestore + hardcoded primary)
+var ADMIN_EMAILS = [ADMIN_CONFIG.email];
+
+function loadAdminEmails() {
+  if (typeof firebase === 'undefined') return;
+  var db = firebase.firestore();
+  db.collection('users').where('role', '==', 'admin').get()
+    .then(function(snapshot) {
+      snapshot.forEach(function(doc) {
+        var email = doc.data().email;
+        if (ADMIN_EMAILS.indexOf(email) === -1) ADMIN_EMAILS.push(email);
+      });
+    });
+}
+
+function isAdminEmail(email) {
+  return ADMIN_EMAILS.indexOf(email) >= 0;
+}
+
+// ===== MEMBER ID GENERATOR (2 digits + 4 uppercase letters) =====
+function generateMemberId() {
+  var digits = String(Math.floor(Math.random() * 90) + 10);
+  var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  var letters = '';
+  for (var i = 0; i < 4; i++) {
+    letters += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return digits + letters;
+}
+
 // ===== NAVBAR SCROLL EFFECT =====
 window.addEventListener('scroll', function() {
   var navbar = document.getElementById('navbar');
@@ -193,11 +223,24 @@ function handleLogin(e) {
       return firebase.auth().signInWithEmailAndPassword(email, password);
     })
     .then(function(credential) {
-      var isAdmin = credential.user.email === ADMIN_CONFIG.email;
-      showToast(isAdmin ? 'Welcome, Admin! Redirecting... 🛡️' : 'Welcome back! Redirecting... ✨', 'success');
-      setTimeout(function() {
-        window.location.href = isAdmin ? 'admin.html' : 'dashboard.html';
-      }, 1000);
+      // Check if admin by email list or Firestore role
+      var userEmail = credential.user.email;
+      if (isAdminEmail(userEmail)) {
+        showToast('Welcome, Admin! Redirecting... 🛡️', 'success');
+        setTimeout(function() { window.location.href = 'admin.html'; }, 1000);
+        return;
+      }
+      // Check Firestore for admin role
+      var db = firebase.firestore();
+      db.collection('users').doc(credential.user.uid).get().then(function(doc) {
+        if (doc.exists && doc.data().role === 'admin') {
+          showToast('Welcome, Admin! Redirecting... 🛡️', 'success');
+          setTimeout(function() { window.location.href = 'admin.html'; }, 1000);
+        } else {
+          showToast('Welcome back! Redirecting... ✨', 'success');
+          setTimeout(function() { window.location.href = 'dashboard.html'; }, 1000);
+        }
+      });
     })
     .catch(function(error) {
       var message = 'Login failed. Please check your credentials.';
@@ -319,6 +362,7 @@ function handleCreateMember(e) {
           }).then(function() {
             // Store member profile in Firestore
             var batch = db.batch();
+            var memberId = generateMemberId();
 
             batch.set(db.collection('users').doc(uid), {
               name: name,
@@ -331,6 +375,8 @@ function handleCreateMember(e) {
               goal: goal || '',
               notes: notes || '',
               role: 'member',
+              memberId: memberId,
+              deleted: false,
               joinedDate: new Date().toISOString()
             });
 
@@ -389,28 +435,49 @@ function loadMembersList() {
 
       var html = '<div style="overflow-x: auto;"><table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">';
       html += '<thead><tr style="background: var(--cream-warm); text-align: left;">';
+      html += '<th style="padding: 12px 16px; border-bottom: 2px solid var(--blush);">ID</th>';
       html += '<th style="padding: 12px 16px; border-bottom: 2px solid var(--blush);">Name</th>';
       html += '<th style="padding: 12px 16px; border-bottom: 2px solid var(--blush);">Phone</th>';
       html += '<th style="padding: 12px 16px; border-bottom: 2px solid var(--blush);">Email</th>';
       html += '<th style="padding: 12px 16px; border-bottom: 2px solid var(--blush);">Plan</th>';
-      html += '<th style="padding: 12px 16px; border-bottom: 2px solid var(--blush);">Age</th>';
       html += '<th style="padding: 12px 16px; border-bottom: 2px solid var(--blush);">Joined</th>';
+      html += '<th style="padding: 12px 16px; border-bottom: 2px solid var(--blush);">Actions</th>';
       html += '</tr></thead><tbody>';
 
+      var hasMembers = false;
       snapshot.forEach(function(doc) {
         var m = doc.data();
+        if (m.deleted) return; // skip soft-deleted members
+        hasMembers = true;
+        var uid = doc.id;
         var joined = m.joinedDate ? new Date(m.joinedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
-        var planEmoji = m.plan === 'Empress' ? '👑' : (m.plan === 'Radiance' ? '✨' : '🌱');
+        var planEmoji = m.plan === 'Empress' ? '👑' : (m.plan === 'Radiance' ? '✨' : (m.plan === 'Personal Training' ? '🏋️' : '🌱'));
+        var isPT = m.plan === 'Personal Training';
+        var mid = m.memberId || '—';
 
         html += '<tr style="border-bottom: 1px solid #f0e8e4;">';
+        html += '<td style="padding: 12px 16px; font-family: monospace; font-weight: 700; letter-spacing: 1px; color: var(--plum); font-size: 0.85rem;">' + escapeHtml(mid) + '</td>';
         html += '<td style="padding: 12px 16px; font-weight: 500;">' + escapeHtml(m.name) + '</td>';
         html += '<td style="padding: 12px 16px;">' + escapeHtml(m.phone) + '</td>';
         html += '<td style="padding: 12px 16px; font-size: 0.82rem; color: var(--text-medium);">' + escapeHtml(m.email) + '</td>';
         html += '<td style="padding: 12px 16px;">' + planEmoji + ' ' + escapeHtml(m.plan) + '</td>';
-        html += '<td style="padding: 12px 16px;">' + (m.age || '—') + '</td>';
         html += '<td style="padding: 12px 16px; font-size: 0.82rem; color: var(--text-light);">' + joined + '</td>';
+        html += '<td style="padding: 10px 16px; white-space: nowrap;">';
+        html += '<button onclick="openMemberEdit(\'' + uid + '\')" style="background: var(--blush-light); border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; color: var(--plum); font-weight: 500; margin-right: 4px;">✏️ Edit</button>';
+        if (!isPT) {
+          html += '<button onclick="enablePT(\'' + uid + '\', \'' + escapeHtml(m.name).replace(/'/g, "\\'") + '\')" style="background: linear-gradient(135deg, var(--plum), var(--plum-light)); border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; color: white; font-weight: 500; margin-right: 4px;">🏋️ PT</button>';
+        } else {
+          html += '<span style="font-size: 0.75rem; color: var(--rose); font-weight: 500; margin-right: 4px;">✅ PT</span>';
+        }
+        html += '<button onclick="openDeleteModal(\'' + uid + '\', \'' + escapeHtml(mid).replace(/'/g, "\\'") + '\', \'' + escapeHtml(m.name).replace(/'/g, "\\'") + '\')" style="background: #fee2e2; border: none; padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; color: #e74c3c; font-weight: 500;">🗑️ Delete</button>';
+        html += '</td>';
         html += '</tr>';
       });
+
+      if (!hasMembers) {
+        container.innerHTML = '<p style="text-align: center; color: var(--text-light); padding: 40px;">No active members. Add your first member! 🌸</p>';
+        return;
+      }
 
       html += '</tbody></table></div>';
       container.innerHTML = html;
@@ -428,8 +495,10 @@ function loadMembersStats() {
       var total = 0, radiance = 0, empress = 0, pt = 0;
 
       snapshot.forEach(function(doc) {
+        var data = doc.data();
+        if (data.deleted) return;
         total++;
-        var plan = doc.data().plan;
+        var plan = data.plan;
         if (plan === 'Radiance') radiance++;
         if (plan === 'Empress') empress++;
         if (plan === 'Personal Training') pt++;
@@ -454,7 +523,7 @@ function enablePT(uid, name) {
   var db = firebase.firestore();
   db.collection('users').doc(uid).update({ plan: 'Personal Training' })
     .then(function() {
-      showToast(name + ' is now a PT member! \ud83c\udfcb\ufe0f', 'success');
+      showToast(name + ' is now a PT member! 🏋️', 'success');
       loadMembersList();
       loadMembersStats();
     })
@@ -463,19 +532,119 @@ function enablePT(uid, name) {
     });
 }
 
-// ===== ADMIN: ENABLE PT FOR MEMBER =====
-function enablePT(uid, name) {
-  if (!confirm('Enable Personal Training for ' + name + '? This will change their plan to PT.')) return;
+// ===== ADMIN: CREATE NEW ADMIN =====
+function handleCreateAdmin(e) {
+  e.preventDefault();
+
+  var name = document.getElementById('adminName').value.trim();
+  var email = document.getElementById('adminEmail').value.trim();
+  var phone = sanitizePhone(document.getElementById('adminPhone').value);
+
+  if (!name || !email || !phone || phone.length !== 10) {
+    showToast('Please fill all fields with a valid 10-digit phone.', 'error');
+    return false;
+  }
+
+  var btn = document.getElementById('createAdminBtn');
+  btn.textContent = 'Creating...';
+  btn.disabled = true;
 
   var db = firebase.firestore();
-  db.collection('users').doc(uid).update({ plan: 'Personal Training' })
+  var tempPassword = generateTempPassword();
+
+  db.collection('phoneMap').doc(phone).get()
+    .then(function(doc) {
+      if (doc.exists) {
+        throw { custom: true, message: 'An account with this phone already exists.' };
+      }
+
+      var secondaryApp = firebase.initializeApp(firebaseConfig, 'SecondaryAdmin');
+      return secondaryApp.auth().createUserWithEmailAndPassword(email, tempPassword)
+        .then(function(credential) {
+          var uid = credential.user.uid;
+          return credential.user.updateProfile({ displayName: name }).then(function() {
+            return secondaryApp.auth().signOut();
+          }).then(function() {
+            return secondaryApp.delete();
+          }).then(function() {
+            var batch = db.batch();
+            batch.set(db.collection('users').doc(uid), {
+              name: name,
+              email: email,
+              phone: phone,
+              role: 'admin',
+              joinedDate: new Date().toISOString()
+            });
+            batch.set(db.collection('phoneMap').doc(phone), { email: email });
+            return batch.commit();
+          }).then(function() {
+            ADMIN_EMAILS.push(email);
+            return firebase.auth().sendPasswordResetEmail(email);
+          });
+        });
+    })
     .then(function() {
-      showToast(name + ' is now a PT member! 🏋️', 'success');
+      showToast('Admin "' + name + '" created! Password reset email sent. 🛡️', 'success');
+      document.getElementById('createAdminForm').reset();
+      btn.textContent = 'Create Admin Account 🛡️';
+      btn.disabled = false;
+    })
+    .catch(function(error) {
+      var message = error.custom ? error.message : 'Failed to create admin.';
+      if (error.code === 'auth/email-already-in-use') message = 'Email already in use.';
+      showToast(message, 'error');
+      btn.textContent = 'Create Admin Account 🛡️';
+      btn.disabled = false;
+      try { firebase.app('SecondaryAdmin').delete(); } catch(e) {}
+    });
+
+  return false;
+}
+
+// ===== ADMIN: DELETE MEMBER (SOFT DELETE) =====
+function openDeleteModal(uid, memberId, name) {
+  document.getElementById('deleteUid').value = uid;
+  document.getElementById('deleteExpectedMemberId').value = memberId;
+  document.getElementById('deleteExpectedName').value = name;
+  document.getElementById('deleteConfirmMemberId').value = '';
+  document.getElementById('deleteConfirmName').value = '';
+  document.getElementById('memberDeleteModal').style.display = 'block';
+}
+
+function closeDeleteModal() {
+  document.getElementById('memberDeleteModal').style.display = 'none';
+}
+
+function confirmDeleteMember() {
+  var uid = document.getElementById('deleteUid').value;
+  var expectedId = document.getElementById('deleteExpectedMemberId').value.toUpperCase();
+  var expectedName = document.getElementById('deleteExpectedName').value.trim().toLowerCase();
+  var enteredId = document.getElementById('deleteConfirmMemberId').value.trim().toUpperCase();
+  var enteredName = document.getElementById('deleteConfirmName').value.trim().toLowerCase();
+
+  if (!enteredId || !enteredName) {
+    showToast('Please enter both Member ID and Name.', 'error');
+    return;
+  }
+  if (enteredId !== expectedId) {
+    showToast('Member ID does not match. Check and try again.', 'error');
+    return;
+  }
+  if (enteredName !== expectedName) {
+    showToast('Member name does not match. Check and try again.', 'error');
+    return;
+  }
+
+  var db = firebase.firestore();
+  db.collection('users').doc(uid).update({ deleted: true, deletedAt: new Date().toISOString() })
+    .then(function() {
+      showToast('Member deactivated successfully.', 'success');
+      closeDeleteModal();
       loadMembersList();
       loadMembersStats();
     })
     .catch(function() {
-      showToast('Failed to update. Try again.', 'error');
+      showToast('Failed to delete. Try again.', 'error');
     });
 }
 
@@ -513,7 +682,8 @@ function showAdminSection(sectionId, clickedLink) {
       'overview': 'Overview',
       'addmember': 'Add New Member',
       'members': 'All Members',
-      'pt': 'Personal Training'
+      'pt': 'Personal Training',
+      'addadmin': 'Add Admin'
     };
     pageTitle.textContent = titles[sectionId] || 'Overview';
   }
@@ -644,6 +814,7 @@ function loadPTMembers() {
       select.innerHTML = '<option value="">Choose a member...</option>';
       snapshot.forEach(function(doc) {
         var m = doc.data();
+        if (m.deleted) return;
         var option = document.createElement('option');
         option.value = doc.id;
         option.textContent = m.name + ' (' + m.phone + ')';
@@ -1071,6 +1242,8 @@ if (typeof firebase !== 'undefined' && window.location.pathname.includes('dashbo
             if (el) el.textContent = data.phone || '';
             el = document.getElementById('profilePlan');
             if (el) el.textContent = plan;
+            el = document.getElementById('profileMemberId');
+            if (el) el.textContent = data.memberId || '—';
             el = document.getElementById('profileJoined');
             if (el && data.joinedDate) el.textContent = new Date(data.joinedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -1117,23 +1290,44 @@ if (typeof firebase !== 'undefined' && window.location.pathname.includes('dashbo
 
 // ===== ADMIN AUTH CHECK =====
 if (typeof firebase !== 'undefined' && window.location.pathname.includes('admin')) {
+  loadAdminEmails();
   firebase.auth().onAuthStateChanged(function(user) {
-    if (!user || user.email !== ADMIN_CONFIG.email) {
-      // Not admin — redirect to login
+    if (!user) {
       window.location.href = 'login.html';
-    } else {
+      return;
+    }
+    // Check hardcoded admin or Firestore role
+    if (isAdminEmail(user.email)) {
       document.getElementById('adminDashboard').style.display = 'flex';
       loadMembersList();
       loadMembersStats();
+    } else {
+      // Check Firestore for admin role
+      firebase.firestore().collection('users').doc(user.uid).get().then(function(doc) {
+        if (doc.exists && doc.data().role === 'admin') {
+          document.getElementById('adminDashboard').style.display = 'flex';
+          loadMembersList();
+          loadMembersStats();
+        } else {
+          window.location.href = 'login.html';
+        }
+      });
     }
   });
 }
 
 // ===== REDIRECT LOGGED-IN USERS FROM LOGIN PAGE =====
 if (typeof firebase !== 'undefined' && window.location.pathname.includes('login')) {
+  loadAdminEmails();
   firebase.auth().onAuthStateChanged(function(user) {
     if (user) {
-      window.location.href = user.email === ADMIN_CONFIG.email ? 'admin.html' : 'dashboard.html';
+      if (isAdminEmail(user.email)) {
+        window.location.href = 'admin.html';
+      } else {
+        firebase.firestore().collection('users').doc(user.uid).get().then(function(doc) {
+          window.location.href = (doc.exists && doc.data().role === 'admin') ? 'admin.html' : 'dashboard.html';
+        });
+      }
     }
   });
 }
