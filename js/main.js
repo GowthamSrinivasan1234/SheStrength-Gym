@@ -660,11 +660,90 @@ function escapeHtml(text) {
 function loadAdminProfile(user) {
   var db = firebase.firestore();
   db.collection('users').doc(user.uid).get().then(function(doc) {
-    var name = (doc.exists && doc.data().name) ? doc.data().name : (user.displayName || user.email.split('@')[0]);
-    var el = document.getElementById('adminDisplayName');
-    if (el) el.textContent = name;
-    var wel = document.getElementById('adminWelcomeText');
-    if (wel) wel.textContent = 'Welcome, ' + name + '! 🛡️';
+    if (!doc.exists) {
+      // Auto-create admin doc for primary admin
+      var adminName = user.displayName || user.email.split('@')[0];
+      if (user.email === ADMIN_CONFIG.email) adminName = 'Gowtham';
+      db.collection('users').doc(user.uid).set({
+        name: adminName,
+        email: user.email,
+        phone: ADMIN_CONFIG.phone,
+        role: 'admin',
+        joinedDate: new Date().toISOString()
+      });
+      setAdminDisplayName(adminName);
+    } else {
+      var data = doc.data();
+      setAdminDisplayName(data.name || user.displayName || user.email.split('@')[0]);
+      // Load admin photo
+      if (data.photoURL) {
+        var img = document.getElementById('adminAvatarImg');
+        var emoji = document.getElementById('adminAvatarEmoji');
+        if (img) { img.src = data.photoURL; img.style.display = 'block'; }
+        if (emoji) emoji.style.display = 'none';
+      }
+    }
+  });
+}
+
+function setAdminDisplayName(name) {
+  var el = document.getElementById('adminDisplayName');
+  if (el) el.textContent = name;
+  var wel = document.getElementById('adminWelcomeText');
+  if (wel) wel.textContent = 'Welcome, ' + name + '! 🛡️';
+}
+
+// ===== PHOTO UPLOAD (Admin) =====
+function handleAdminPhotoUpload(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('Please select an image file.', 'error'); return; }
+  if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB.', 'error'); return; }
+
+  var user = firebase.auth().currentUser;
+  if (!user) return;
+
+  showToast('Uploading photo...', 'success');
+  var storageRef = firebase.storage().ref('profilePhotos/' + user.uid);
+  storageRef.put(file).then(function(snapshot) {
+    return snapshot.ref.getDownloadURL();
+  }).then(function(url) {
+    return firebase.firestore().collection('users').doc(user.uid).update({ photoURL: url }).then(function() { return url; });
+  }).then(function(url) {
+    var img = document.getElementById('adminAvatarImg');
+    var emoji = document.getElementById('adminAvatarEmoji');
+    if (img) { img.src = url; img.style.display = 'block'; }
+    if (emoji) emoji.style.display = 'none';
+    showToast('Profile photo updated! 📸', 'success');
+  }).catch(function() {
+    showToast('Failed to upload photo. Try again.', 'error');
+  });
+}
+
+// ===== PHOTO UPLOAD (Member) =====
+function handleMemberPhotoUpload(input) {
+  var file = input.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { showToast('Please select an image file.', 'error'); return; }
+  if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB.', 'error'); return; }
+
+  var user = firebase.auth().currentUser;
+  if (!user) return;
+
+  showToast('Uploading photo...', 'success');
+  var storageRef = firebase.storage().ref('profilePhotos/' + user.uid);
+  storageRef.put(file).then(function(snapshot) {
+    return snapshot.ref.getDownloadURL();
+  }).then(function(url) {
+    return firebase.firestore().collection('users').doc(user.uid).update({ photoURL: url }).then(function() { return url; });
+  }).then(function(url) {
+    var img = document.getElementById('profileAvatarImg');
+    var emoji = document.getElementById('profileAvatarEmoji');
+    if (img) { img.src = url; img.style.display = 'block'; }
+    if (emoji) emoji.style.display = 'none';
+    showToast('Profile photo updated! 📸', 'success');
+  }).catch(function() {
+    showToast('Failed to upload photo. Try again.', 'error');
   });
 }
 
@@ -1258,6 +1337,14 @@ if (typeof firebase !== 'undefined' && window.location.pathname.includes('dashbo
             if (el) el.textContent = data.memberId || '—';
             el = document.getElementById('profileJoined');
             if (el && data.joinedDate) el.textContent = new Date(data.joinedDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            // Load profile photo
+            if (data.photoURL) {
+              var pImg = document.getElementById('profileAvatarImg');
+              var pEmoji = document.getElementById('profileAvatarEmoji');
+              if (pImg) { pImg.src = data.photoURL; pImg.style.display = 'block'; }
+              if (pEmoji) pEmoji.style.display = 'none';
+            }
 
             // Populate editable form fields
             el = document.getElementById('profileAge');
