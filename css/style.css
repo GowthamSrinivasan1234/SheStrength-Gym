@@ -1944,6 +1944,21 @@ img {
   margin-top: 6px;
 }
 
+/* Community Spotlight Cards */
+.community-spotlight-card {
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 4px 20px rgba(107, 45, 91, 0.08);
+  border: 1px solid var(--blush-light);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+}
+
+.community-spotlight-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(201, 76, 110, 0.15);
+}
+
 /* Pricing Table */
 .pricing-table {
   width: 100%;

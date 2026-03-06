@@ -816,14 +816,63 @@ function showSection(sectionId, clickedLink) {
       'pricing': 'Pricing & Plans',
       'events': 'Events',
       'announcements': 'Announcements',
+      'community': 'Member Spotlights',
       'mytraining': 'My Training',
       'profile': 'My Profile'
     };
     pageTitle.textContent = titles[sectionId] || 'Dashboard';
   }
 
+  if (sectionId === 'community') {
+    loadCommunityMembers();
+  }
+
   var main = document.querySelector('.dashboard-main');
   if (main) main.scrollTop = 0;
+}
+
+// ===== COMMUNITY: LOAD FEATURED MEMBERS =====
+function loadCommunityMembers() {
+  var container = document.getElementById('communityContainer');
+  if (!container) return;
+
+  var db = firebase.firestore();
+  db.collection('users').where('featured', '==', true).get()
+    .then(function(snapshot) {
+      var members = [];
+      snapshot.forEach(function(doc) {
+        var m = doc.data();
+        if (m.deleted) return;
+        members.push(m);
+      });
+
+      if (members.length === 0) {
+        container.innerHTML = '<div style="text-align: center; padding: 60px 20px; grid-column: 1 / -1;">' +
+          '<div style="font-size: 3rem; margin-bottom: 12px;">🌸</div>' +
+          '<h3 style="font-family: Playfair Display, serif; color: var(--plum); margin-bottom: 8px;">Spotlights Coming Soon!</h3>' +
+          '<p style="color: var(--text-light);">Our amazing members will be featured here soon.</p>' +
+          '</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      members.forEach(function(m) {
+        var photoHTML = m.photoURL
+          ? '<img src="' + m.photoURL + '" alt="' + (m.name || '') + '" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid var(--blush-light);">'
+          : '<div style="width: 90px; height: 90px; border-radius: 50%; background: linear-gradient(135deg, #f8d7e8, #f0b8d0); display: flex; align-items: center; justify-content: center; font-size: 2.2rem; border: 3px solid var(--blush-light);">💪</div>';
+
+        var card = document.createElement('div');
+        card.className = 'community-spotlight-card';
+        card.innerHTML =
+          '<div style="text-align: center; padding: 28px 20px;">' +
+            '<div style="margin-bottom: 14px;">' + photoHTML + '</div>' +
+            '<h3 style="font-family: Playfair Display, serif; color: var(--plum); font-size: 1.15rem; margin-bottom: 4px;">' + (m.name || 'Member') + '</h3>' +
+            (m.occupation ? '<p style="color: var(--rose); font-weight: 500; font-size: 0.88rem; margin-bottom: 10px;">💼 ' + m.occupation + '</p>' : '') +
+            (m.funFact ? '<p style="color: var(--text-medium); font-size: 0.85rem; font-style: italic; line-height: 1.5;">✨ "' + m.funFact + '"</p>' : '') +
+          '</div>';
+        container.appendChild(card);
+      });
+    });
 }
 
 // ===== LOGOUT HANDLER =====
@@ -852,6 +901,9 @@ function openMemberEdit(uid) {
     document.getElementById('editHeight').value = m.height || '';
     document.getElementById('editGoal').value = m.goal || '';
     document.getElementById('editNotes').value = m.notes || '';
+    document.getElementById('editOccupation').value = m.occupation || '';
+    document.getElementById('editFunFact').value = m.funFact || '';
+    document.getElementById('editFeatured').checked = m.featured || false;
     document.getElementById('memberEditModal').style.display = 'block';
   });
 }
@@ -877,7 +929,10 @@ function handleEditMember(e) {
     weight: document.getElementById('editWeight').value,
     height: document.getElementById('editHeight').value,
     goal: document.getElementById('editGoal').value.trim(),
-    notes: document.getElementById('editNotes').value.trim()
+    notes: document.getElementById('editNotes').value.trim(),
+    occupation: document.getElementById('editOccupation').value.trim(),
+    funFact: document.getElementById('editFunFact').value.trim(),
+    featured: document.getElementById('editFeatured').checked
   }).then(function() {
     showToast('Member updated! ✅', 'success');
     btn.textContent = 'Save Changes ✅';
