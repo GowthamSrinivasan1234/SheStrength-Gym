@@ -1,12 +1,19 @@
 name: Create PR - Dev to Main
 
 on:
-  push:
-    branches: [dev]
+  workflow_run:
+    workflows: ["Deploy to Vercel"]
+    types: [completed]
 
 jobs:
   create-pr:
     name: Create Pull Request
+    if: >-
+      ${{
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'dev'
+      }}
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -15,6 +22,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: dev
 
       - name: Create or Update Pull Request
         uses: repo-sync/pull-request@v2
