@@ -81,7 +81,10 @@
             <strong>Aishwarya Devi</strong>
             <small>Radiance Member</small>
           </div>
-          <div class="avatar">👩</div>
+          <div class="avatar" style="position: relative; cursor: pointer; overflow: hidden;" onclick="document.getElementById('memberPhotoInput').click()">
+            <span id="topbarAvatarEmoji">👩</span>
+            <img id="topbarAvatarImg" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; position: absolute; top: 0; left: 0;">
+          </div>
         </div>
       </div>
 
