@@ -1,0 +1,49 @@
+name: Create PR - Dev to Main
+
+on:
+  workflow_run:
+    workflows: ["Deploy to Vercel"]
+    types: [completed]
+
+jobs:
+  create-pr:
+    name: Create Pull Request
+    if: >-
+      ${{
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'dev'
+      }}
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: dev
+
+      - name: Create or Update Pull Request
+        uses: repo-sync/pull-request@v2
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          source_branch: dev
+          destination_branch: main
+          pr_title: "🚀 Deploy: Merge dev → main"
+          pr_body: |
+            ## Automated PR from `dev` branch
+
+            This PR was auto-created by CI/CD pipeline.
+
+            **Reviewer:** @GowthamSrinivasan1234
+
+            ### Checklist
+            - ✅ Validation passed on `dev` branch
+            - ⬜ Approved by project owner
+
+            ---
+            *Once approved and merged, changes will auto-deploy to Vercel.*
+          pr_reviewer: GowthamSrinivasan1234
+          pr_label: deployment

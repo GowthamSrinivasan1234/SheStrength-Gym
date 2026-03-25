@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — SheStrength</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
+</head>
+<body>
+
+  <div style="position: fixed; bottom: 10px; right: 10px; z-index: 99999; background: #2d1f28; color: #fff; padding: 6px 10px; border-radius: 8px; font-size: 0.72rem; opacity: 0.9;">Build 20260310-6</div>
+
+  <!-- ========== ADMIN DASHBOARD ========== -->
+  <div class="dashboard-layout" id="adminDashboard" style="display: none;">
+    <!-- Sidebar -->
+    <aside class="sidebar" style="background: #2D1F28;">
+      <div class="sidebar-logo">
+        <h2>She<span>Strength</span></h2>
+        <p style="font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 4px;">Admin Panel</p>
+      </div>
+
+      <nav class="sidebar-menu">
+        <div class="menu-label">Management</div>
+        <a href="#" class="active" onclick="showAdminSection('overview', this)">
+          <span class="menu-icon">📊</span><span>Overview</span>
+        </a>
+        <a href="#" onclick="showAdminSection('addmember', this)">
+          <span class="menu-icon">➕</span><span>Add Member</span>
+        </a>
+        <a href="#" onclick="showAdminSection('members', this)">
+          <span class="menu-icon">👥</span><span>All Members</span>
+        </a>
+        <a href="#" onclick="showAdminSection('pt', this)">
+          <span class="menu-icon">🏋️</span><span>PT Progress</span>
+        </a>
+        <a href="#" onclick="showAdminSection('addadmin', this)">
+          <span class="menu-icon">🛡️</span><span>Add Admin</span>
+        </a>
+
+        <div class="sidebar-divider"></div>
+        <div class="menu-label">Links</div>
+        <a href="index.html">
+          <span class="menu-icon">🌐</span><span>Website</span>
+        </a>
+        <a href="#" onclick="handleLogout()">
+          <span class="menu-icon">🚪</span><span>Logout</span>
+        </a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+      <div class="dashboard-topbar">
+        <h1 id="adminPageTitle">Overview</h1>
+        <div class="topbar-user">
+          <div class="user-info">
+            <strong id="adminDisplayName">Admin</strong>
+            <small>Admin</small>
+          </div>
+          <div class="avatar" id="adminAvatar" style="background: linear-gradient(135deg, #3D2836, #6B2D5B); position: relative; cursor: pointer; overflow: hidden;" onclick="document.getElementById('adminPhotoInput').click()">
+            <span id="adminAvatarEmoji">🛡️</span>
+            <img id="adminAvatarImg" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; position: absolute; top: 0; left: 0;">
+            <input type="file" id="adminPhotoInput" accept="image/*" style="display: none;" onchange="handleAdminPhotoUpload(this)">
+            <div style="position: absolute; bottom: -2px; right: -2px; background: var(--rose); width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; border: 2px solid white;">✏️</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- OVERVIEW SECTION -->
+      <div id="admin-section-overview" class="dashboard-section">
+        <div class="dashboard-welcome" style="background: linear-gradient(135deg, #3D2836, #6B2D5B, #C94C6E);">
+          <h2 id="adminWelcomeText">Welcome! 🛡️</h2>
+          <p>Manage your gym members and keep the community growing.</p>
+        </div>
+
+        <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="stat-card">
+            <div class="stat-icon pink">👥</div>
+            <div class="stat-value" id="totalMembersCount">0</div>
+            <div class="stat-label">Total Members</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon lavender">✨</div>
+            <div class="stat-value" id="radianceMembersCount">0</div>
+            <div class="stat-label">Radiance Members</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon mint">👑</div>
+            <div class="stat-value" id="empressMembersCount">0</div>
+            <div class="stat-label">Empress Members</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon pink">🏋️</div>
+            <div class="stat-value" id="ptMembersCount">0</div>
+            <div class="stat-label">Personal Training</div>
+          </div>
+        </div>
+
+        <div class="dash-card" style="margin-top: 24px;">
+          <h3>⚡ Quick Actions</h3>
+          <div style="display: flex; gap: 16px; margin-top: 16px; flex-wrap: wrap;">
+            <button class="btn btn-primary" onclick="showAdminSection('addmember', document.querySelector('.sidebar-menu a:nth-child(3)'))">
+              ➕ Add New Member
+            </button>
+            <button class="btn btn-outline" onclick="showAdminSection('members', document.querySelector('.sidebar-menu a:nth-child(4)'))">
+              👥 View All Members
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADD MEMBER SECTION -->
+      <div id="admin-section-addmember" class="dashboard-section" style="display: none;">
+        <div class="dash-card">
+          <h3>➕ Register New Member</h3>
+          <p style="color: var(--text-medium); margin-bottom: 24px;">
+            Enter phone number and email. A password setup email will be sent. The member can fill in their own details (age, weight, height, etc.) from their profile.
+          </p>
+
+          <form id="createMemberForm" novalidate>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="memberName">Full Name *</label>
+                <input type="text" id="memberName" placeholder="e.g., Priya Sharma" required>
+              </div>
+              <div class="form-group">
+                <label for="memberEmail">Email Address *</label>
+                <input type="email" id="memberEmail" placeholder="e.g., priya@email.com" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="memberPhone">Phone Number *</label>
+                <input type="tel" id="memberPhone" placeholder="e.g., 9876543210" required>
+              </div>
+              <div class="form-group">
+                <label for="memberPlan">Membership Plan *</label>
+                <select id="memberPlan" required>
+                  <option value="">Select plan...</option>
+                  <option value="Blossom">🌱 Blossom — ₹1,499/month</option>
+                  <option value="Radiance">✨ Radiance — ₹2,499/month</option>
+                  <option value="Empress">👑 Empress — ₹3,999/month</option>
+                  <option value="Personal Training">🏋️ Personal Training</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary" id="createMemberBtn" style="width: 100%; justify-content: center;" onclick="setInlineStatus('createMemberStatus', 'Submit clicked. Validating form...', 'info')">
+              Create Member Account & Send Password Email 📧
+            </button>
+            <p id="createMemberStatus" style="margin-top: 12px; font-size: 0.88rem; color: var(--text-medium);"></p>
+            <div id="mailDebugLog" style="margin-top: 10px; font-size: 0.78rem; color: #5a4a4a; background: #f8f1f4; border: 1px solid #ead9e1; border-radius: 10px; padding: 10px; max-height: 120px; overflow-y: auto;">Mail debug log: waiting for action...</div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ADD ADMIN SECTION -->
+      <div id="admin-section-addadmin" class="dashboard-section" style="display: none;">
+        <div class="dash-card">
+          <h3>🛡️ Add New Admin</h3>
+          <p style="color: var(--text-medium); margin-bottom: 24px;">Create another admin account. They will receive a password setup email.</p>
+
+          <form id="createAdminForm" novalidate>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="adminName">Full Name *</label>
+                <input type="text" id="adminName" placeholder="e.g., Trainer Meera" required>
+              </div>
+              <div class="form-group">
+                <label for="adminEmail">Email Address *</label>
+                <input type="email" id="adminEmail" placeholder="e.g., meera@email.com" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="adminPhone">Phone Number *</label>
+              <input type="tel" id="adminPhone" placeholder="e.g., 9876543210" required>
+            </div>
+            <button type="submit" class="btn btn-primary" id="createAdminBtn" style="width: 100%; justify-content: center;" onclick="setInlineStatus('createAdminStatus', 'Submit clicked. Validating form...', 'info')">Create Admin Account 🛡️</button>
+            <p id="createAdminStatus" style="margin-top: 12px; font-size: 0.88rem; color: var(--text-medium);"></p>
+          </form>
+        </div>
+      </div>
+
+      <!-- MEMBERS LIST SECTION -->
+      <div id="admin-section-members" class="dashboard-section" style="display: none;">
+        <div class="dash-card">
+          <h3>👥 All Registered Members</h3>
+          <p style="color: var(--text-medium); margin-bottom: 20px;">Click on a member to view/edit their details.</p>
+
+          <div id="membersListContainer">
+            <p style="text-align: center; color: var(--text-light); padding: 40px;">Loading members...</p>
+          </div>
+        </div>
+
+        <!-- Member Edit Modal -->
+        <div id="memberEditModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
+          <div style="background: white; border-radius: 20px; padding: 32px; max-width: 600px; width: 90%; max-height: 85vh; overflow-y: auto; margin: auto; position: relative; top: 50%; transform: translateY(-50%);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h3 style="color: var(--plum);">✏️ Edit Member</h3>
+              <button onclick="closeMemberEdit()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+            </div>
+            <form id="editMemberForm" onsubmit="return handleEditMember(event)">
+              <input type="hidden" id="editMemberUid">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Name</label>
+                  <input type="text" id="editName" required>
+                </div>
+                <div class="form-group">
+                  <label>Email</label>
+                  <input type="email" id="editEmail" disabled style="opacity: 0.6;">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Phone</label>
+                  <input type="tel" id="editPhone" disabled style="opacity: 0.6;">
+                </div>
+                <div class="form-group">
+                  <label>Plan</label>
+                  <select id="editPlan">
+                    <option value="Blossom">🌱 Blossom</option>
+                    <option value="Radiance">✨ Radiance</option>
+                    <option value="Empress">👑 Empress</option>
+                    <option value="Personal Training">🏋️ Personal Training</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Age</label>
+                  <input type="number" id="editAge">
+                </div>
+                <div class="form-group">
+                  <label>Weight (kg)</label>
+                  <input type="number" id="editWeight" step="0.1">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Height (cm)</label>
+                  <input type="number" id="editHeight" step="0.1">
+                </div>
+                <div class="form-group">
+                  <label>Goal</label>
+                  <input type="text" id="editGoal">
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Notes</label>
+                <textarea id="editNotes" style="min-height: 60px;"></textarea>
+              </div>
+              <div style="border-top: 1px solid #f0e0e8; margin: 16px 0 12px; padding-top: 14px;">
+                <div style="font-family: 'Playfair Display', serif; color: var(--plum); font-size: 1rem; margin-bottom: 12px;">👑 Community Spotlight</div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Occupation / Profession</label>
+                    <input type="text" id="editOccupation" placeholder="e.g., Software Engineer">
+                  </div>
+                  <div class="form-group">
+                    <label>Fun Fact</label>
+                    <input type="text" id="editFunFact" placeholder="e.g., Ran 3 marathons!">
+                  </div>
+                </div>
+                <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                  <input type="checkbox" id="editFeatured" style="width: 18px; height: 18px; accent-color: var(--rose);">
+                  <label for="editFeatured" style="margin: 0; font-weight: 600; color: var(--plum);">Feature in Community Spotlights</label>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary" id="editMemberBtn" style="width: 100%; justify-content: center;">Save Changes ✅</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div id="memberDeleteModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1001; align-items: center; justify-content: center;">
+          <div style="background: white; border-radius: 20px; padding: 32px; max-width: 450px; width: 90%; margin: auto; position: relative; top: 50%; transform: translateY(-50%); text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 8px;">⚠️</div>
+            <h3 style="color: #e74c3c; margin-bottom: 8px;">Delete Member</h3>
+            <p style="color: var(--text-medium); margin-bottom: 20px; font-size: 0.88rem;">This action will deactivate the member. Please confirm by entering their details:</p>
+            <input type="hidden" id="deleteUid">
+            <input type="hidden" id="deleteExpectedMemberId">
+            <input type="hidden" id="deleteExpectedName">
+            <div class="form-group" style="text-align: left;">
+              <label>Enter Member ID</label>
+              <input type="text" id="deleteConfirmMemberId" placeholder="e.g., 42KXMB" style="text-transform: uppercase;">
+            </div>
+            <div class="form-group" style="text-align: left;">
+              <label>Enter Member Name</label>
+              <input type="text" id="deleteConfirmName" placeholder="e.g., Priya Sharma">
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 16px;">
+              <button onclick="closeDeleteModal()" class="btn btn-outline" style="flex: 1; justify-content: center;">Cancel</button>
+              <button onclick="confirmDeleteMember()" class="btn" style="flex: 1; justify-content: center; background: #e74c3c; color: white; border: none; padding: 12px; border-radius: 12px; cursor: pointer; font-weight: 600;">Delete Member</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PT PROGRESS SECTION -->
+      <div id="admin-section-pt" class="dashboard-section" style="display: none;">
+        <div class="dash-card">
+          <h3>🏋️ Personal Training — Progress Tracker</h3>
+          <p style="color: var(--text-medium); margin-bottom: 20px;">Select a PT member to view or add progress entries.</p>
+
+          <div class="form-group">
+            <label for="ptMemberSelect">Select PT Member</label>
+            <select id="ptMemberSelect" onchange="loadPTProgress(this.value)">
+              <option value="">Choose a member...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Add Workout Entry -->
+        <div class="dash-card" id="ptAddEntryCard" style="display: none; margin-top: 20px;">
+          <h3>➕ Log Workout Session</h3>
+          <form id="ptProgressForm" onsubmit="return handleAddProgress(event)">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="ptDate">Date</label>
+                <input type="date" id="ptDate" required>
+              </div>
+              <div class="form-group">
+                <label for="ptSessionType">Session Type</label>
+                <select id="ptSessionType">
+                  <option value="Strength Training">Strength Training</option>
+                  <option value="Cardio">Cardio</option>
+                  <option value="HIIT">HIIT</option>
+                  <option value="Flexibility & Mobility">Flexibility & Mobility</option>
+                  <option value="Full Body">Full Body</option>
+                  <option value="Upper Body">Upper Body</option>
+                  <option value="Lower Body">Lower Body</option>
+                  <option value="Core">Core</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="ptExercises">Exercises Performed</label>
+              <textarea id="ptExercises" placeholder="e.g.,
+Squats — 3 sets x 12 reps (20kg)
+Lunges — 3 sets x 10 reps
+Plank — 3 sets x 45 sec
+Treadmill — 15 min" style="min-height: 120px;" required></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="ptDuration">Duration (minutes)</label>
+                <input type="number" id="ptDuration" placeholder="e.g., 60" min="1">
+              </div>
+              <div class="form-group">
+                <label for="ptCalories">Calories Burned (approx)</label>
+                <input type="number" id="ptCalories" placeholder="e.g., 350" min="0">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="ptWeight">Current Weight (kg)</label>
+                <input type="number" id="ptWeight" step="0.1" placeholder="e.g., 58.5">
+              </div>
+              <div class="form-group">
+                <label for="ptIntensity">Intensity Level</label>
+                <select id="ptIntensity">
+                  <option value="Light">🟢 Light</option>
+                  <option value="Moderate" selected>🟡 Moderate</option>
+                  <option value="High">🟠 High</option>
+                  <option value="Intense">🔴 Intense</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="ptTrainerNotes">Trainer Notes</label>
+              <textarea id="ptTrainerNotes" placeholder="Performance observations, next session plan, areas to improve..." style="min-height: 60px;"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" id="addProgressBtn" style="width: 100%; justify-content: center;">Log Workout 🏋️</button>
+          </form>
+        </div>
+
+        <!-- Progress History -->
+        <div class="dash-card" id="ptHistoryCard" style="display: none; margin-top: 20px;">
+          <h3>📈 Progress History</h3>
+          <div id="ptHistoryContainer">
+            <p style="text-align: center; color: var(--text-light); padding: 20px;">Select a member to view progress.</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
+  <script src="js/main.js?v=20260310-8"></script>
+</body>
+</html>
