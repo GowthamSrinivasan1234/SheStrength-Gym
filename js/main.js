@@ -869,7 +869,7 @@ function handleAdminPhotoUpload(input) {
   storageRef.put(file).then(function(snapshot) {
     return snapshot.ref.getDownloadURL();
   }).then(function(url) {
-    return firebase.firestore().collection('users').doc(user.uid).update({ photoURL: url }).then(function() { return url; });
+    return firebase.firestore().collection('users').doc(user.uid).set({ photoURL: url }, { merge: true }).then(function() { return url; });
   }).then(function(url) {
     var img = document.getElementById('adminAvatarImg');
     var emoji = document.getElementById('adminAvatarEmoji');
@@ -901,7 +901,7 @@ function handleMemberPhotoUpload(input) {
   storageRef.put(file).then(function(snapshot) {
     return snapshot.ref.getDownloadURL();
   }).then(function(url) {
-    return firebase.firestore().collection('users').doc(user.uid).update({ photoURL: url }).then(function() { return url; });
+    return firebase.firestore().collection('users').doc(user.uid).set({ photoURL: url }, { merge: true }).then(function() { return url; });
   }).then(function(url) {
     var img = document.getElementById('profileAvatarImg');
     var emoji = document.getElementById('profileAvatarEmoji');
