@@ -1,0 +1,48 @@
+name: CI - Validate & Preview
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    name: Validate Project
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate HTML files
+        run: |
+          echo "Checking HTML files exist..."
+          for file in index.html login.html dashboard.html admin.html; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Missing: $file"
+              exit 1
+            fi
+            echo "✅ Found: $file"
+          done
+
+      - name: Validate JS files
+        run: |
+          echo "Checking JS files..."
+          if [ ! -f "js/main.js" ]; then
+            echo "❌ Missing: js/main.js"
+            exit 1
+          fi
+          echo "✅ Found: js/main.js"
+
+      - name: Validate CSS files
+        run: |
+          echo "Checking CSS files..."
+          if [ ! -f "css/style.css" ]; then
+            echo "❌ Missing: css/style.css"
+            exit 1
+          fi
+          echo "✅ Found: css/style.css"
+
+      - name: Check for syntax errors in JS
+        run: node --check js/main.js
