@@ -166,6 +166,36 @@ function showToast(message, type) {
   }, 4000);
 }
 
+function setInlineStatus(elementId, message, type) {
+  var el = document.getElementById(elementId);
+  if (!el) return;
+  var color = 'var(--text-medium)';
+  if (type === 'success') color = '#1e8449';
+  if (type === 'error') color = '#b03a2e';
+  el.textContent = message || '';
+  el.style.color = color;
+}
+
+function notifyOutcome(message, type, statusElementId) {
+  if (statusElementId) {
+    setInlineStatus(statusElementId, message, type);
+  }
+  showToast(message, type);
+  if (type === 'success' || type === 'error') {
+    alert(message);
+  }
+}
+
+function appendMailDebug(message) {
+  var el = document.getElementById('mailDebugLog');
+  if (!el) return;
+  var t = new Date().toLocaleTimeString();
+  var line = document.createElement('div');
+  line.textContent = '[' + t + '] ' + message;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
 // ===== UTILITY: Generate Temp Password =====
 function generateTempPassword() {
   var chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$';
@@ -181,6 +211,46 @@ function generateTempPassword() {
 // ===== UTILITY: Sanitize Phone =====
 function sanitizePhone(phone) {
   return phone.replace(/\D/g, '').replace(/^91/, '').slice(-10);
+}
+
+// ===== UTILITY: Delay =====
+function delay(ms) {
+  return new Promise(function(resolve) {
+    setTimeout(resolve, ms);
+  });
+}
+
+// ===== UTILITY: Send Reset Email with Retry =====
+function sendResetEmailWithRetry(email, attemptsLeft) {
+  attemptsLeft = typeof attemptsLeft === 'number' ? attemptsLeft : 4;
+
+  return firebase.auth().sendPasswordResetEmail(email)
+    .then(function() {
+      return { email: email };
+    })
+    .catch(function(error) {
+      // Newly created users can take a short moment to become queryable for reset emails.
+      if (error && error.code === 'auth/user-not-found' && attemptsLeft > 1) {
+        return delay(1500).then(function() {
+          return sendResetEmailWithRetry(email, attemptsLeft - 1);
+        });
+      }
+      throw error;
+    });
+}
+
+function retryOnUnavailable(operationFn, attemptsLeft, waitMs) {
+  attemptsLeft = typeof attemptsLeft === 'number' ? attemptsLeft : 3;
+  waitMs = typeof waitMs === 'number' ? waitMs : 1500;
+
+  return operationFn().catch(function(error) {
+    if (error && error.code === 'unavailable' && attemptsLeft > 1) {
+      return delay(waitMs).then(function() {
+        return retryOnUnavailable(operationFn, attemptsLeft - 1, waitMs);
+      });
+    }
+    throw error;
+  });
 }
 
 // ===== MEMBER LOGIN HANDLER (Phone-based) =====
@@ -284,18 +354,21 @@ function handleForgotPassword(e) {
   var btn = document.getElementById('resetBtn');
   btn.textContent = 'Sending...';
   btn.disabled = true;
+  showToast('Sending password reset email...', 'success');
 
   var db = firebase.firestore();
-  db.collection('phoneMap').doc(phone).get()
+  retryOnUnavailable(function() {
+    return db.collection('phoneMap').doc(phone).get();
+  }, 3, 1500)
     .then(function(doc) {
       if (!doc.exists) {
         throw { code: 'not-found' };
       }
       var email = doc.data().email;
-      return firebase.auth().sendPasswordResetEmail(email);
+      return sendResetEmailWithRetry(email);
     })
-    .then(function() {
-      showToast('Password reset email sent! Check your inbox. 📧', 'success');
+    .then(function(result) {
+      showToast('Password reset email sent successfully to ' + result.email + '. 📧', 'success');
       btn.textContent = 'Send Reset Link 📧';
       btn.disabled = false;
       toggleForgotPassword();
@@ -304,6 +377,9 @@ function handleForgotPassword(e) {
       var message = error.code === 'not-found'
         ? 'No account found with this phone number. Contact the gym.'
         : 'Failed to send reset email. Please try again.';
+      if (error && error.code) {
+        message += ' (' + error.code + ')';
+      }
       showToast(message, 'error');
       btn.textContent = 'Send Reset Link 📧';
       btn.disabled = false;
@@ -316,42 +392,73 @@ function handleForgotPassword(e) {
 
 // ===== ADMIN: CREATE MEMBER =====
 function handleCreateMember(e) {
-  e.preventDefault();
+  if (e && e.preventDefault) e.preventDefault();
+  appendMailDebug('handleCreateMember triggered');
 
-  var name = document.getElementById('memberName').value.trim();
-  var email = document.getElementById('memberEmail').value.trim();
-  var phone = sanitizePhone(document.getElementById('memberPhone').value);
-  var age = document.getElementById('memberAge').value;
-  var weight = document.getElementById('memberWeight').value;
-  var height = document.getElementById('memberHeight').value;
-  var plan = document.getElementById('memberPlan').value;
-  var goal = document.getElementById('memberGoal').value.trim();
-  var notes = document.getElementById('memberNotes').value.trim();
+  function getRequiredTrimmedValue(id) {
+    var el = document.getElementById(id);
+    if (!el) {
+      appendMailDebug('missing required field in DOM: ' + id);
+      return null;
+    }
+    return String(el.value || '').trim();
+  }
 
-  if (!name || !email || !phone || phone.length !== 10 || !plan) {
-    showToast('Please fill in all required fields with a valid 10-digit phone.', 'error');
+  var name = getRequiredTrimmedValue('memberName');
+  var email = getRequiredTrimmedValue('memberEmail');
+  var rawPhone = getRequiredTrimmedValue('memberPhone');
+  var plan = getRequiredTrimmedValue('memberPlan');
+
+  if (name === null || email === null || rawPhone === null || plan === null) {
+    notifyOutcome('Form is outdated in browser cache. Please hard refresh (Ctrl+F5) and try again.', 'error', 'createMemberStatus');
+    return false;
+  }
+
+  var phone = sanitizePhone(rawPhone);
+  var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!name || !email || !phone || !plan) {
+    appendMailDebug('validation failed: required fields missing');
+    notifyOutcome('Please fill all required fields.', 'error', 'createMemberStatus');
+    return false;
+  }
+  if (!emailPattern.test(email)) {
+    appendMailDebug('validation failed: invalid email');
+    notifyOutcome('Please enter a valid email address.', 'error', 'createMemberStatus');
+    return false;
+  }
+  if (phone.length !== 10) {
+    appendMailDebug('validation failed: invalid phone');
+    notifyOutcome('Phone number must be 10 digits.', 'error', 'createMemberStatus');
     return false;
   }
 
   var btn = document.getElementById('createMemberBtn');
   btn.textContent = 'Creating account...';
   btn.disabled = true;
+  setInlineStatus('createMemberStatus', 'Creating account and sending email...', 'info');
+  showToast('Creating member account for ' + email + '...', 'success');
 
   var db = firebase.firestore();
   var tempPassword = generateTempPassword();
+  var memberRecordCreated = false;
+  appendMailDebug('checking phoneMap and creating account for ' + email);
 
   // Check if phone already exists
   db.collection('phoneMap').doc(phone).get()
     .then(function(doc) {
       if (doc.exists) {
+        appendMailDebug('phone already exists in phoneMap');
         throw { custom: true, message: 'A member with this phone number already exists.' };
       }
 
       // Create user via secondary Firebase app (so admin stays logged in)
       var secondaryApp = firebase.initializeApp(firebaseConfig, 'Secondary');
+      appendMailDebug('secondary auth app initialized');
       return secondaryApp.auth().createUserWithEmailAndPassword(email, tempPassword)
         .then(function(credential) {
           var uid = credential.user.uid;
+          appendMailDebug('auth user created with uid ' + uid);
 
           // Update display name
           return credential.user.updateProfile({ displayName: name }).then(function() {
@@ -368,12 +475,7 @@ function handleCreateMember(e) {
               name: name,
               email: email,
               phone: phone,
-              age: age || '',
-              weight: weight || '',
-              height: height || '',
               plan: plan,
-              goal: goal || '',
-              notes: notes || '',
               role: 'member',
               memberId: memberId,
               deleted: false,
@@ -385,15 +487,23 @@ function handleCreateMember(e) {
               email: email
             });
 
-            return batch.commit();
+            return retryOnUnavailable(function() {
+              return batch.commit();
+            }, 3, 1500).then(function() {
+              memberRecordCreated = true;
+              appendMailDebug('firestore user and phoneMap saved');
+            });
           }).then(function() {
             // Send password reset email so member sets their own password
-            return firebase.auth().sendPasswordResetEmail(email);
+            appendMailDebug('sending password reset email');
+            return sendResetEmailWithRetry(email);
           });
         });
     })
     .then(function() {
-      showToast('Member "' + name + '" created! Password reset email sent. 🎉', 'success');
+      appendMailDebug('password reset email send resolved successfully');
+      setInlineStatus('createMemberStatus', 'Success: password email sent to ' + email + '.', 'success');
+      showToast('Member "' + name + '" created! Password email sent to ' + email + '. 🎉', 'success');
       document.getElementById('createMemberForm').reset();
       btn.textContent = 'Create Member Account & Send Password Email 📧';
       btn.disabled = false;
@@ -406,8 +516,16 @@ function handleCreateMember(e) {
         message = 'An account with this email already exists.';
       } else if (error.code === 'auth/invalid-email') {
         message = 'Invalid email address.';
+      } else if (error.code === 'unavailable') {
+        message = 'Server is temporarily unavailable. Please check internet and try again in a minute.';
+      } else if (memberRecordCreated && (error.code === 'auth/user-not-found' || error.code === 'auth/too-many-requests')) {
+        message = 'Member created, but password email could not be sent now. Ask the member to use Forgot Password after 1-2 minutes.';
       }
-      showToast(message, 'error');
+      if (error && error.code && !error.custom) {
+        message += ' (' + error.code + ')';
+      }
+      appendMailDebug('failed: ' + (error && error.code ? error.code : 'unknown error'));
+      notifyOutcome('Failed: ' + message, 'error', 'createMemberStatus');
       btn.textContent = 'Create Member Account & Send Password Email 📧';
       btn.disabled = false;
 
@@ -539,20 +657,34 @@ function handleCreateAdmin(e) {
   var name = document.getElementById('adminName').value.trim();
   var email = document.getElementById('adminEmail').value.trim();
   var phone = sanitizePhone(document.getElementById('adminPhone').value);
+  var emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-  if (!name || !email || !phone || phone.length !== 10) {
-    showToast('Please fill all fields with a valid 10-digit phone.', 'error');
+  if (!name || !email || !phone) {
+    notifyOutcome('Please fill all required fields.', 'error', 'createAdminStatus');
+    return false;
+  }
+  if (!emailPattern.test(email)) {
+    notifyOutcome('Please enter a valid email address.', 'error', 'createAdminStatus');
+    return false;
+  }
+  if (phone.length !== 10) {
+    notifyOutcome('Phone number must be 10 digits.', 'error', 'createAdminStatus');
     return false;
   }
 
   var btn = document.getElementById('createAdminBtn');
   btn.textContent = 'Creating...';
   btn.disabled = true;
+  setInlineStatus('createAdminStatus', 'Creating account and sending email...', 'info');
+  showToast('Creating admin account for ' + email + '...', 'success');
 
   var db = firebase.firestore();
   var tempPassword = generateTempPassword();
+  var adminRecordCreated = false;
 
-  db.collection('phoneMap').doc(phone).get()
+  retryOnUnavailable(function() {
+    return db.collection('phoneMap').doc(phone).get();
+  }, 3, 1500)
     .then(function(doc) {
       if (doc.exists) {
         throw { custom: true, message: 'An account with this phone already exists.' };
@@ -576,15 +708,20 @@ function handleCreateAdmin(e) {
               joinedDate: new Date().toISOString()
             });
             batch.set(db.collection('phoneMap').doc(phone), { email: email });
-            return batch.commit();
+            return retryOnUnavailable(function() {
+              return batch.commit();
+            }, 3, 1500).then(function() {
+              adminRecordCreated = true;
+            });
           }).then(function() {
             ADMIN_EMAILS.push(email);
-            return firebase.auth().sendPasswordResetEmail(email);
+            return sendResetEmailWithRetry(email);
           });
         });
     })
     .then(function() {
-      showToast('Admin "' + name + '" created! Password reset email sent. 🛡️', 'success');
+      setInlineStatus('createAdminStatus', 'Success: password email sent to ' + email + '.', 'success');
+      showToast('Admin "' + name + '" created! Password email sent to ' + email + '. 🛡️', 'success');
       document.getElementById('createAdminForm').reset();
       btn.textContent = 'Create Admin Account 🛡️';
       btn.disabled = false;
@@ -592,7 +729,14 @@ function handleCreateAdmin(e) {
     .catch(function(error) {
       var message = error.custom ? error.message : 'Failed to create admin.';
       if (error.code === 'auth/email-already-in-use') message = 'Email already in use.';
-      showToast(message, 'error');
+      else if (error.code === 'unavailable') message = 'Server is temporarily unavailable. Please check internet and try again in a minute.';
+      else if (adminRecordCreated && (error.code === 'auth/user-not-found' || error.code === 'auth/too-many-requests')) {
+        message = 'Admin created, but password email could not be sent now. Please ask them to use Forgot Password after 1-2 minutes.';
+      }
+      if (error && error.code && !error.custom) {
+        message += ' (' + error.code + ')';
+      }
+      notifyOutcome('Failed: ' + message, 'error', 'createAdminStatus');
       btn.textContent = 'Create Admin Account 🛡️';
       btn.disabled = false;
       try { firebase.app('SecondaryAdmin').delete(); } catch(e) {}
@@ -725,7 +869,7 @@ function handleAdminPhotoUpload(input) {
   storageRef.put(file).then(function(snapshot) {
     return snapshot.ref.getDownloadURL();
   }).then(function(url) {
-    return firebase.firestore().collection('users').doc(user.uid).update({ photoURL: url }).then(function() { return url; });
+    return firebase.firestore().collection('users').doc(user.uid).set({ photoURL: url }, { merge: true }).then(function() { return url; });
   }).then(function(url) {
     var img = document.getElementById('adminAvatarImg');
     var emoji = document.getElementById('adminAvatarEmoji');
@@ -757,7 +901,7 @@ function handleMemberPhotoUpload(input) {
   storageRef.put(file).then(function(snapshot) {
     return snapshot.ref.getDownloadURL();
   }).then(function(url) {
-    return firebase.firestore().collection('users').doc(user.uid).update({ photoURL: url }).then(function() { return url; });
+    return firebase.firestore().collection('users').doc(user.uid).set({ photoURL: url }, { merge: true }).then(function() { return url; });
   }).then(function(url) {
     var img = document.getElementById('profileAvatarImg');
     var emoji = document.getElementById('profileAvatarEmoji');
@@ -1471,6 +1615,41 @@ if (typeof firebase !== 'undefined' && window.location.pathname.includes('dashbo
 
 // ===== ADMIN AUTH CHECK =====
 if (typeof firebase !== 'undefined' && window.location.pathname.includes('admin')) {
+  // Show explicit validation feedback when browser form constraints fail.
+  document.addEventListener('DOMContentLoaded', function() {
+    appendMailDebug('main.js loaded on admin page');
+    var memberForm = document.getElementById('createMemberForm');
+    var adminForm = document.getElementById('createAdminForm');
+    if (memberForm) {
+      memberForm.addEventListener('submit', function(evt) {
+        evt.preventDefault();
+        handleCreateMember(evt);
+      });
+      appendMailDebug('member form submit listener attached');
+    }
+    if (adminForm) {
+      adminForm.addEventListener('submit', function(evt) {
+        evt.preventDefault();
+        handleCreateAdmin(evt);
+      });
+      appendMailDebug('admin form submit listener attached');
+    }
+    if (memberForm) {
+      memberForm.addEventListener('invalid', function(evt) {
+        evt.preventDefault();
+        var field = evt.target && evt.target.id ? evt.target.id : 'field';
+        setInlineStatus('createMemberStatus', 'Invalid input in ' + field + '. Please correct and submit again.', 'error');
+      }, true);
+    }
+    if (adminForm) {
+      adminForm.addEventListener('invalid', function(evt) {
+        evt.preventDefault();
+        var field = evt.target && evt.target.id ? evt.target.id : 'field';
+        setInlineStatus('createAdminStatus', 'Invalid input in ' + field + '. Please correct and submit again.', 'error');
+      }, true);
+    }
+  });
+
   loadAdminEmails();
   firebase.auth().onAuthStateChanged(function(user) {
     if (!user) {
