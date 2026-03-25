@@ -1570,6 +1570,17 @@ function loadMyPTProgress(uid) {
 
 // ===== DASHBOARD AUTH CHECK (Member Dashboard) =====
 if (typeof firebase !== 'undefined' && window.location.pathname.includes('dashboard')) {
+  // Set up member photo upload click handler
+  document.addEventListener('DOMContentLoaded', function() {
+    var avatarContainer = document.getElementById('memberAvatarContainer');
+    var photoInput = document.getElementById('memberPhotoInput');
+    if (avatarContainer && photoInput) {
+      avatarContainer.addEventListener('click', function() {
+        photoInput.click();
+      });
+    }
+  });
+
   firebase.auth().onAuthStateChanged(function(user) {
     if (!user) {
       window.location.href = 'login.html';
