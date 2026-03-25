@@ -23,6 +23,13 @@ var ADMIN_CONFIG = {
   email: 'gowthamsrinivasan1234@gmail.com'
 };
 
+// ===== CLOUDINARY CONFIG =====
+// Free image hosting - no CORS issues
+var CLOUDINARY_CONFIG = {
+  cloudName: 'dcywb4jkc',
+  uploadPreset: 'Gowtham'
+};
+
 // List of admin emails (loaded from Firestore + hardcoded primary)
 var ADMIN_EMAILS = [ADMIN_CONFIG.email];
 
@@ -854,6 +861,35 @@ function setAdminDisplayName(name) {
   if (wel) wel.textContent = 'Welcome, ' + name + '! 🛡️';
 }
 
+// ===== CLOUDINARY UPLOAD HELPER =====
+function uploadToCloudinary(file, oderId) {
+  return new Promise(function(resolve, reject) {
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_CONFIG.uploadPreset);
+    formData.append('folder', 'shestrength/profiles');
+
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://api.cloudinary.com/v1_1/' + CLOUDINARY_CONFIG.cloudName + '/image/upload', true);
+
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        var response = JSON.parse(xhr.responseText);
+        var optimizedUrl = response.secure_url.replace('/upload/', '/upload/w_200,h_200,c_fill,g_face,q_auto,f_auto/');
+        resolve(optimizedUrl);
+      } else {
+        reject(new Error('Upload failed: ' + xhr.statusText));
+      }
+    };
+
+    xhr.onerror = function() {
+      reject(new Error('Network error during upload'));
+    };
+
+    xhr.send(formData);
+  });
+}
+
 // ===== PHOTO UPLOAD (Admin) =====
 function handleAdminPhotoUpload(input) {
   var file = input.files[0];
@@ -865,24 +901,22 @@ function handleAdminPhotoUpload(input) {
   if (!user) return;
 
   showToast('Uploading photo...', 'success');
-  var storageRef = firebase.storage().ref('profilePhotos/' + user.uid);
-  storageRef.put(file).then(function(snapshot) {
-    return snapshot.ref.getDownloadURL();
-  }).then(function(url) {
-    return firebase.firestore().collection('users').doc(user.uid).set({ photoURL: url }, { merge: true }).then(function() { return url; });
-  }).then(function(url) {
-    var img = document.getElementById('adminAvatarImg');
-    var emoji = document.getElementById('adminAvatarEmoji');
-    if (img) { img.src = url; img.style.display = 'block'; }
-    if (emoji) emoji.style.display = 'none';
-    showToast('Profile photo updated! 📸', 'success');
-  }).catch(function(err) {
-    if (err && err.code && err.code.indexOf('storage') !== -1) {
-      showToast('📷 Photo upload is not enabled yet. Contact admin.', 'error');
-    } else {
+  
+  uploadToCloudinary(file, user.uid)
+    .then(function(url) {
+      return firebase.firestore().collection('users').doc(user.uid).set({ photoURL: url }, { merge: true }).then(function() { return url; });
+    })
+    .then(function(url) {
+      var img = document.getElementById('adminAvatarImg');
+      var emoji = document.getElementById('adminAvatarEmoji');
+      if (img) { img.src = url; img.style.display = 'block'; }
+      if (emoji) emoji.style.display = 'none';
+      showToast('Profile photo updated! 📸', 'success');
+    })
+    .catch(function(err) {
+      console.error('Photo upload error:', err);
       showToast('Failed to upload photo. Try again.', 'error');
-    }
-  });
+    });
   input.value = '';
 }
 
@@ -897,24 +931,29 @@ function handleMemberPhotoUpload(input) {
   if (!user) return;
 
   showToast('Uploading photo...', 'success');
-  var storageRef = firebase.storage().ref('profilePhotos/' + user.uid);
-  storageRef.put(file).then(function(snapshot) {
-    return snapshot.ref.getDownloadURL();
-  }).then(function(url) {
-    return firebase.firestore().collection('users').doc(user.uid).set({ photoURL: url }, { merge: true }).then(function() { return url; });
-  }).then(function(url) {
-    var img = document.getElementById('profileAvatarImg');
-    var emoji = document.getElementById('profileAvatarEmoji');
-    if (img) { img.src = url; img.style.display = 'block'; }
-    if (emoji) emoji.style.display = 'none';
-    showToast('Profile photo updated! 📸', 'success');
-  }).catch(function(err) {
-    if (err && err.code && err.code.indexOf('storage') !== -1) {
-      showToast('📷 Photo upload is not enabled yet. Contact admin.', 'error');
-    } else {
+  
+  uploadToCloudinary(file, user.uid)
+    .then(function(url) {
+      return firebase.firestore().collection('users').doc(user.uid).set({ photoURL: url }, { merge: true }).then(function() { return url; });
+    })
+    .then(function(url) {
+      var img = document.getElementById('profileAvatarImg');
+      var emoji = document.getElementById('profileAvatarEmoji');
+      if (img) { img.src = url; img.style.display = 'block'; }
+      if (emoji) emoji.style.display = 'none';
+      
+      // Also update topbar avatar
+      var topImg = document.getElementById('topbarAvatarImg');
+      var topEmoji = document.getElementById('topbarAvatarEmoji');
+      if (topImg) { topImg.src = url; topImg.style.display = 'block'; }
+      if (topEmoji) topEmoji.style.display = 'none';
+      
+      showToast('Profile photo updated! 📸', 'success');
+    })
+    .catch(function(err) {
+      console.error('Photo upload error:', err);
       showToast('Failed to upload photo. Try again.', 'error');
-    }
-  });
+    });
   input.value = '';
 }
 
