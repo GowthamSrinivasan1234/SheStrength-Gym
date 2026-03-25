@@ -922,13 +922,14 @@ function handleAdminPhotoUpload(input) {
 
 // ===== PHOTO UPLOAD (Member) =====
 function handleMemberPhotoUpload(input) {
+  alert('Photo upload triggered!'); // Debug
   var file = input.files[0];
   if (!file) return;
   if (!file.type.startsWith('image/')) { showToast('Please select an image file.', 'error'); return; }
   if (file.size > 5 * 1024 * 1024) { showToast('Image must be under 5MB.', 'error'); return; }
 
   var user = firebase.auth().currentUser;
-  if (!user) return;
+  if (!user) { alert('No user logged in!'); return; }
 
   showToast('Uploading photo...', 'success');
   
